@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+from collections import deque
 class Course:
     def __init__(self, name):
         #this variable represents the name of the course
@@ -71,16 +72,8 @@ class Student:
         return self.course
     def get_year_group(self):
         return self.year_group
-        
-def assign_color(course, exam_period):
-    reds = [x for x in course.get_red()]
-    colors = [courses[course_index_hash_map[x]].get_color() for x in reds]
-    for x in range(0, exam_period):
-        if x not in colors:
-            course.set_color(x)
-            return True
-    return False
-    
+
+
 def scheduler(exam_period, courses):
     ''' 
     This function takes a variable representing the number of days available for examinations and 
@@ -89,12 +82,31 @@ def scheduler(exam_period, courses):
         List: Courses that couldn't be scheduled 
     '''
     unscheduled = []
-    for x in courses:
-        hello = assign_color(x, exam_period)
-         # If the course couldn't be scheduled, add to unscheduled list
-        if not hello:
-            unscheduled.append(x)
-    return (unscheduled)
+    scheduled = []
+    my_queue = []
+    visited = []
+    start = courses[0]
+    my_queue.append(start)
+
+    while my_queue:
+        current = my_queue.pop(0)
+        reds = [courses[course_index_hash_map[x]] for x in current.get_red()]
+        colors = [y.get_color() for y in reds if y in visited]
+        for x in range(0, exam_period):
+            if x not in colors:
+                print(colors, x, current.get_name())
+                current.set_color(x)
+                scheduled.append(current)
+                break
+
+        visited.append(current)
+        if current.get_color() not in range(0, exam_period):
+            unscheduled.append(current)            
+
+        my_queue.extend([y for y in reds if y not in my_queue and y not in visited])
+        my_queue.sort(key=lambda x: len(x.get_red()), reverse=True)
+
+    return (scheduled, unscheduled)
 
 
 #initializing the list of Course objects to be scheduled
@@ -158,11 +170,12 @@ courses.sort(key=lambda x: len(x.get_red()), reverse=True)
 num_days = 7
 hello = scheduler(num_days, courses)
 print("I'm done")
-print(len(hello))
+print(len(hello[0]))
 print(len(courses))
 
 
-
+for x in hello[0]:
+    print(x.get_name(), x.get_color())
 #printing result of scheduling
 # output = [[] for _ in range (num_days)]
 # for co in courses:
