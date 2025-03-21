@@ -1,6 +1,6 @@
 import pandas as pd
 import random
-from collections import deque
+import requests
 class Course:
     def __init__(self, name):
         #this variable represents the name of the course
@@ -43,7 +43,7 @@ class Course:
     def get_students(self):
         return self.students
     def get_majors(self):
-        return num_majors
+        return self.majors
     def get_size(self):
         return self.size
     def is_compatible(self, others):
@@ -94,7 +94,6 @@ def scheduler(exam_period, courses):
         colors = [y.get_color() for y in reds if y in visited]
         for x in range(0, exam_period):
             if x not in colors:
-                print(colors, x, current.get_name())
                 current.set_color(x)
                 scheduled.append(current)
                 break
@@ -109,81 +108,87 @@ def scheduler(exam_period, courses):
     return (scheduled, unscheduled)
 
 
-#initializing the list of Course objects to be scheduled
-courses = []
-students = []
+def excel_to_csv(excel_file_name):
+    file_as_df = pd.read_excel(excel_file_name, header=0)
+    return file_as_df
 
-'''This section of code converts the input excel files to csv. Run only once. '''
-# enrol_df = pd.read_excel('original.xlsx', sheet_name='Enrollment List - Used', header=0)
-# enrol_df.to_csv('data.csv', index=False)
-# classroom_df = pd.read_excel('classrooms.xlsx', sheet_name='Sheet1', header=0)
-# classroom_df.to_csv('classes.csv', index=False)
+def drop_unneccessary_columns(enrol_df):
+    return enrol_df[enrol_df['Type'] == "Schedule"] 
 
-#opening the files as panda dataframes
-enrol_df = pd.read_csv('data.csv')
-classes = pd.read_csv('classes.csv')
+def prep_student_and_courses(enrol_excel_name):
+    #opening the file as a panda dataframes and 
+    #dropping all unnecessary courses that are not being scheduled
+    enrol_df = drop_unneccessary_columns(excel_to_csv(enrol_excel_name))
+    #initializing the list of Course objects to be scheduled
+    courses = []
+    students = []
 
-#getting the total classroom capacity
-classrooms = classes['Capacity'].value_counts().to_dict()
-#dropping all courses that shouldn't be scheduled
-enrol_df = enrol_df[enrol_df['Type'] == "Schedule"] 
+    #setting up course objects
+    courses_in_set = enrol_df["Course Name"].unique()
+    index = 0
+    for x in courses_in_set:
+        #initialising the course
+        new_course = Course(x)
+        courses.append(new_course)
+        #hash its location for quick retrieval later
+        course_index_hash_map[x] = index
+        index +=1
+
+    #Setting up student objects
+    students = enrol_df["Generated ID"].unique()
+    for id in students:
+        #get all the rows associated with the student
+        student_set = enrol_df[enrol_df["Generated ID"] == id]
+
+        #identify the student's program
+        student_program = student_set["Student Program"].iloc[[0]]
+        #use that data to create the student object
+        student = Student(id, student_program)
+        #get all the courses the student is enrolled in 
+        enrolled =  student_set["Course Name"].unique().tolist()
+        major_courses = student_set[student_set["Course Sub Category"] == "Required Major Classes"]["Course Name"].unique().tolist()
+        #update course records as necessary.   
+        for x in enrolled:
+            course_loc = course_index_hash_map[x]
+            #add student to the course's student list
+            courses[course_loc].set_students(student)
+            if x in major_courses:
+                #update the courses's major var, if the student is taking it as a required major course
+                courses[course_loc].set_majors()
+            #update the red flags list in all courses to prevent clashing
+            courses[course_loc].update_red(enrolled)
+
+    courses.sort(key=lambda x: len(x.get_red()), reverse=True)
+    return (courses, students, course_index_hash_map)
+
+def prep_classroom_data(class_excel_name):
+    classes = excel_to_csv(class_excel_name)
+    #getting the total classroom capacity
+    classrooms = classes['Capacity'].value_counts().to_dict()
+    return classrooms
+
+def prep_output(courses, num_days):
+    # printing result of scheduling
+    output = [[] for _ in range (num_days)]
+    for co in courses:
+        if co.get_color() in range(num_days):
+            output[co.get_color()].append(co.get_name()) 
+
+    for x in output:
+        print(x, "\n")
+
+
+def main(enrol_excel_name, classroom_excel_name, num_days):
+    variables = prep_student_and_courses(enrol_excel_name)
+    courses = variables[0]
+    students = variables[1]
+    course_index_hash_map = variables[2]
+    classrooms = prep_classroom_data(classroom_excel_name)
+    hello = scheduler(num_days, courses)
+    print(len(hello[0]))
+    print(len(courses))
+    prep_output(courses, num_days)
+    print("Unscheduled:\n", [x.get_name() for x in hello[1]])
+
 course_index_hash_map = {}
-
-
-#setting up course objects
-courses_in_set = enrol_df["Course Name"].unique()
-index = 0
-for x in courses_in_set:
-    #initialising the course
-    new_course = Course(x)
-    courses.append(new_course)
-    #hash its location for quick retrieval later
-    course_index_hash_map[x] = index
-    index +=1
-
-#Setting up student objects
-students = enrol_df["Generated ID"].unique()
-for id in students:
-    #get all the rows associated with the student
-    student_set = enrol_df[enrol_df["Generated ID"] == id]
-
-    #identify the student's program
-    student_program = student_set["Student Program"].iloc[[0]]
-    #use that data to create the student object
-    student = Student(id, student_program)
-    #get all the courses the student is enrolled in 
-    enrolled =  student_set["Course Name"].unique().tolist()
-    major_courses = student_set[student_set["Course Sub Category"] == "Required Major Classes"]["Course Name"].unique().tolist()
-    #update course records as necessary.   
-    for x in enrolled:
-        course_loc = course_index_hash_map[x]
-        #add student to the course's student list
-        courses[course_loc].set_students(student)
-        if x in major_courses:
-            #update the courses's major var, if the student is taking it as a required major course
-            courses[course_loc].set_majors()
-        #update the red flags list in all courses to prevent clashing
-        courses[course_loc].update_red(enrolled)
-
-courses.sort(key=lambda x: len(x.get_red()), reverse=True)
-
-num_days = 7
-hello = scheduler(num_days, courses)
-print("I'm done")
-print(len(hello[0]))
-print(len(courses))
-
-
-for x in hello[0]:
-    print(x.get_name(), x.get_color())
-#printing result of scheduling
-# output = [[] for _ in range (num_days)]
-# for co in courses:
-    # output[co.get_color()].append(co.get_name()) 
-
-# for x in output:
-#     print(x)
-
-
-
-
+main("original.xlsx", "classrooms.xlsx", 8)
