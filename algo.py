@@ -39,6 +39,8 @@ class Course:
     #accessor method for name, students and majors variables
     def get_color(self):
         return self.color
+    def get_classrooms(self):
+        return self.classrooms
     def get_red(self):
         return self.red_flags
     def get_name(self):
@@ -56,6 +58,10 @@ class Course:
             if x.get_name() in self.red_flags: 
                 return False
         return True
+    def get_compatibility_rating(self, others):
+        overlap = list(set([x.get_name() for x in others]) & set(self.red_flags))
+        return [len(overlap), overlap]
+        
     def get_size(self):
         self.set_size(len(self.students))
         return len(self.students)
@@ -199,8 +205,26 @@ def go_over(list_output, unscheduled):
                 unscheduled.remove(x)
     return list_output, unscheduled
 
-def classroom_assigner(classrooms, courses):
+def get_best_slot(unscheduled_courses, slots):
+        unscheduled_best = {}
+        for x in unscheduled_courses:
+            min = 90987656789
+            for y in range(len(slots)):
+                rating = x.get_compatibility_rating(slots[y])
+                if rating[0] < min:
+                    min = rating[0] 
+                    unscheduled_best[x.get_name()]=[y, rating[1]]
+                elif rating[0] == min:
+                    unscheduled_best[x.get_name()]. append([y, rating[1]])
+        return unscheduled_best
+
+def classroom_assigner(classrooms, scheduled_courses, unscheduled_and_best):
     pass
+def year_distributions(course):
+    students = course.get_students()
+    df = pd.DataFrame([{"Name": x.name, "Age": p.age, "Country": p.country} for x in students])
+
+
 
 def main(enrol_excel_name, classroom_excel_name, num_days):
     variables = prep_student_and_courses(enrol_excel_name)
@@ -211,8 +235,9 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
-    print(len(courses), len(final_out[1]))    
-    
+    print(len(courses), len(final_out[1]))  
+    unscheduled_with_best_slots = get_best_slot(final_out[1], final_out[0])
 
+    test = final_out[1][0]
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
