@@ -86,12 +86,14 @@ class Slot:
     def __init__(self, classrooms):
         #this variable represents the student's id
         #these represent is the student's program and year group
-        self.available_space = 0
         self.courses = []       
         self.classrooms = classrooms
+        self.available_space = sum([x * len(self.classrooms[x]) for x in self.classrooms])
 
-        def get_available_space():
+        def get_available_space(self):
             return self.available_space
+        def assign(self, course):
+            pass
         
 
 def scheduler(exam_period, courses):
@@ -187,7 +189,6 @@ def prep_classroom_data(class_excel_name):
     room_sizes = classes['Capacity'].unique().tolist()
     for x in room_sizes:
         classrooms[x] = classes[classes["Capacity"] == x]["Classroom "].unique().tolist()
-    print(classrooms)
     return classrooms
 
 def prep_output(courses, num_days):
@@ -213,17 +214,42 @@ def get_best_slot(unscheduled_courses, slots):
                 rating = x.get_compatibility_rating(slots[y])
                 if rating[0] < min:
                     min = rating[0] 
-                    unscheduled_best[x.get_name()]=[y, rating[1]]
+                    unscheduled_best[x.get_name()]=[[y, rating[1]]]
                 elif rating[0] == min:
                     unscheduled_best[x.get_name()]. append([y, rating[1]])
         return unscheduled_best
-
+def order_best_slot(best_slot, num_days):
+    new_list = [[] for x in range(num_days)]
+    for x in best_slot:
+        for y in best_slot[x]:
+            new_list[y[0]].append({x:y[1]})
+    return new_list
 def classroom_assigner(classrooms, scheduled_courses, unscheduled_and_best):
-    pass
-def year_distributions(course):
-    students = course.get_students()
-    df = pd.DataFrame([{"Name": x.name, "Age": p.age, "Country": p.country} for x in students])
+    final_day_slots = [[] for _ in range(len(scheduled_courses))]
+    for x in range(len(scheduled_courses)):
+        to_be_scheduled = scheduled_courses[x]
+        unscheduled_that_fit = unscheduled_and_best[x]
+        final_day_slots[x] = assignments(to_be_scheduled, unscheduled_that_fit, classrooms)
+    return final_day_slots
 
+def assignments(courses, possible_fittings, classrooms):
+    eight_am = Slot(classrooms)
+    one_pm = Slot(classrooms)
+    clashes = []
+    if possible_fittings:
+        for x in possible_fittings:
+            for y in x:
+                clashes.extend(x[y])
+    clashes = list(set(clashes))
+    courses = sorted(courses, key=lambda course: (course.get_name() not in clashes))
+
+    for x in courses:
+        if (one_pm.get_available_space() >= x.get_size()):
+            one_pm.assign(x)
+        else:
+            eight_am.assign(x)
+
+    return [eight_am, one_pm]
 
 
 def main(enrol_excel_name, classroom_excel_name, num_days):
@@ -236,8 +262,8 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
     print(len(courses), len(final_out[1]))  
-    unscheduled_with_best_slots = get_best_slot(final_out[1], final_out[0])
+    unscheduled_with_best_slots = order_best_slot(get_best_slot(final_out[1], final_out[0]), num_days)
+    final_arrangement = classroom_assigner(classrooms, final_out[0], unscheduled_with_best_slots)
 
-    test = final_out[1][0]
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
