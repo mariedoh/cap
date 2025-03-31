@@ -181,6 +181,7 @@ def prep_classroom_data(class_excel_name):
     room_sizes = classes['Capacity'].unique().tolist()
     for x in room_sizes:
         classrooms[x] = classes[classes["Capacity"] == x]["Classroom "].unique().tolist()
+    print(classrooms)
     return classrooms
 
 def prep_output(courses, num_days):
@@ -210,8 +211,7 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
-    print(len(courses), len(final_out[1]))
-    print(final_out)
+    print(len(courses), len(final_out[1]))    
     
 
 course_index_hash_map = {}
