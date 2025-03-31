@@ -14,6 +14,7 @@ class Course:
         self.majors = 0;
         self.size = None;
         self.color = 9003;
+        self.classrooms = [];
 
     #mutator methods for the course attributes
     def  set_students(self, student):
@@ -22,6 +23,8 @@ class Course:
         self.majors += 1
     def set_name(self, name):
         self.name = name
+    def update_classrooms(self, name):
+        self.classrooms.append(name)
     def set_size(self, size):
         self.size = size
     def update_red(self, red):
@@ -73,6 +76,17 @@ class Student:
     def get_year_group(self):
         return self.year_group
 
+class Slot:
+    def __init__(self, classrooms):
+        #this variable represents the student's id
+        #these represent is the student's program and year group
+        self.available_space = 0
+        self.courses = []       
+        self.classrooms = classrooms
+
+        def get_available_space():
+            return self.available_space
+        
 
 def scheduler(exam_period, courses):
     ''' 
@@ -162,9 +176,11 @@ def prep_student_and_courses(enrol_excel_name):
     return (courses, students, course_index_hash_map)
 
 def prep_classroom_data(class_excel_name):
+    classrooms = {}
     classes = excel_to_csv(class_excel_name)
-    #getting the total classroom capacity
-    classrooms = classes['Capacity'].value_counts().to_dict()
+    room_sizes = classes['Capacity'].unique().tolist()
+    for x in room_sizes:
+        classrooms[x] = classes[classes["Capacity"] == x]["Classroom "].unique().tolist()
     return classrooms
 
 def prep_output(courses, num_days):
@@ -172,11 +188,18 @@ def prep_output(courses, num_days):
     output = [[] for _ in range (num_days)]
     for co in courses:
         if co.get_color() in range(num_days):
-            output[co.get_color()].append(co.get_name()) 
+            output[co.get_color()].append(co) 
+    return output
+def go_over(list_output, unscheduled):
+    for x in unscheduled:
+        for y in range(len(list_output)):
+            if (x.is_compatible(list_output[y])):
+                list_output[y].append(x)
+                unscheduled.remove(x)
+    return list_output, unscheduled
 
-    for x in output:
-        print(x, "\n")
-
+def classroom_assigner(classrooms, courses):
+    pass
 
 def main(enrol_excel_name, classroom_excel_name, num_days):
     variables = prep_student_and_courses(enrol_excel_name)
@@ -185,10 +208,11 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     course_index_hash_map = variables[2]
     classrooms = prep_classroom_data(classroom_excel_name)
     hello = scheduler(num_days, courses)
-    print(len(hello[0]))
-    print(len(courses))
-    prep_output(courses, num_days)
-    print("Unscheduled:\n", [x.get_name() for x in hello[1]])
+    list_outs = prep_output(courses, num_days)
+    final_out = go_over(list_outs, hello[1])
+    print(len(courses), len(final_out[1]))
+    print(final_out)
+    
 
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
