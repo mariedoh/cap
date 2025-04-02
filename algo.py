@@ -59,7 +59,7 @@ class Course:
                 return False
         return True
     def get_compatibility_rating(self, others):
-        overlap = list(set([x.get_name() for x in others]) & set(self.red_flags))
+        overlap = list(set([x.get_name() for x in others]) & set(self.red_flags))            
         return [len(overlap), overlap]
         
     def get_size(self):
@@ -241,7 +241,7 @@ def assignments(courses, possible_fittings, classrooms):
             for y in x:
                 clashes.extend(x[y])
     clashes = list(set(clashes))
-    courses = sorted(courses, key=lambda course: (course.get_name() not in clashes))
+    courses = sorted(courses, key=lambda course: (course.get_name() not in clashes, course.get_size()))
 
     for x in courses:
         if (one_pm.get_available_space() >= x.get_size()):
@@ -262,8 +262,10 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
     print(len(courses), len(final_out[1]))  
-    unscheduled_with_best_slots = order_best_slot(get_best_slot(final_out[1], final_out[0]), num_days)
-    final_arrangement = classroom_assigner(classrooms, final_out[0], unscheduled_with_best_slots)
+    best_slots = get_best_slot(final_out[1], final_out[0])
+    print(classrooms)
+    # unscheduled_with_best_slots = order_best_slot(best_slots, num_days)
+    # final_arrangement = classroom_assigner(classrooms, final_out[0], unscheduled_with_best_slots)
 
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
