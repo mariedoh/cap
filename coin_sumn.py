@@ -47,24 +47,28 @@ class tree_builder:
                         val = True
         self.level= z
         return [self.level, val]
-    
-z = tree_builder({20: ['A', 'B', 'C'], 35: ['D', 'E', 'F', 'G', 'H', 'I'], 40: ['J', 'K']}, 338)
-x = []
-nonzero = True
 
-while nonzero:
-    x = z.build()
-    nonzero = not x[1] 
+def assign_classroom(classrooms, value):   
+    if(sum([x * len(classrooms[x]) for x in classrooms]) < value):
+        print("VALUE TOO LARGE")
+        return False 
+    z = tree_builder(classrooms, value)
+    x = []
+    nonzero = True
 
+    while nonzero:
+        x = z.build()
+        nonzero = not x[1] 
+    min_val = -98765434567
+    min_node = None
+    for node in x[0]:
+        if node.get_value() > min_val and node.get_value() <= 0:
+            if min_node != None and len(node.get_steps()) >= len(min_node.get_steps()):
+                pass                 
+            else:       
+                min_val = node.get_value()
+                min_node = node
 
-min_val = -98765434567
-min_node = None
-for node in x[0]:
-    if node.get_value() > min_val and node.get_value() <= 0:
-        if min_node != None and len(node.get_steps()) >= len(min_node.get_steps()):
-            pass                 
-        else:       
-            min_val = node.get_value()
-            min_node = node
+    return(min_node.get_steps())
 
-print(min_node.get_steps())
+print(assign_classroom({20: ['A', 'B', 'C'], 35: ['D', 'E', 'F', 'G', 'H', 'I'], 40: ['J', 'K']}, 330))
