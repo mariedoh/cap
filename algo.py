@@ -229,7 +229,7 @@ def classroom_assigner(classrooms, scheduled_courses, unscheduled_and_best):
     for x in range(len(scheduled_courses)):
         to_be_scheduled = scheduled_courses[x]
         unscheduled_that_fit = unscheduled_and_best[x]
-        final_day_slots[x] = assignments(to_be_scheduled, unscheduled_that_fit, classrooms)
+        final_day_slots[x] = assignments(to_be_scheduled,] unscheduled_that_fit, classrooms)
     return final_day_slots
 
 def assignments(courses, possible_fittings, classrooms):
@@ -263,9 +263,8 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     final_out = go_over(list_outs, hello[1])
     print(len(courses), len(final_out[1]))  
     best_slots = get_best_slot(final_out[1], final_out[0])
-    print(classrooms)
-    # unscheduled_with_best_slots = order_best_slot(best_slots, num_days)
+    unscheduled_with_best_slots = order_best_slot(best_slots, num_days)
     # final_arrangement = classroom_assigner(classrooms, final_out[0], unscheduled_with_best_slots)
-
+    print([x.get_size() for x in courses])
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
