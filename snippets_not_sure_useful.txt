@@ -1,2 +1,0 @@
-TO DO 
-1) Convert set up to function. 
