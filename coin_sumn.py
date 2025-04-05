@@ -71,4 +71,5 @@ def assign_classroom(classrooms, value):
 
     return(min_node.get_steps())
 
-print(assign_classroom({20: ['A', 'B', 'C'], 35: ['D', 'E', 'F', 'G', 'H', 'I'], 40: ['J', 'K']}, 330))
+hello = assign_classroom({20: ['A', 'B', 'C'], 35: ['D', 'E', 'F', 'G', 'H', 'I'], 40: ['J', 'K']}, 330)
+print(hello)

@@ -1,6 +1,55 @@
 import pandas as pd
-import random
-import requests
+import copy
+
+class Node:
+    def __init__(self, options, value, steps):
+        self.options = options
+        self.value = value
+        self.steps = steps
+        self.children = []
+    def get_options(self):
+        return self.options
+    def get_value(self):
+        return self.value
+    def get_steps(self):
+        return self.steps
+    def birth(self):
+        for x in self.options:
+            x= int(x)
+            new_value = self.value - x
+            new_steps = self.steps + [x]
+            check = len(self.options[x])
+            for_kids = copy.deepcopy(self.options)
+
+            if (check <= 1):
+                del for_kids[x]
+            else:
+                for_kids[x].pop()
+            
+            self.children.append(Node(for_kids, new_value, new_steps)) 
+
+        return self.children
+
+class tree_builder:
+    def __init__(self, classrooms, value):
+        self.head = Node(classrooms, value, [])
+        self.level = [self.head]
+
+    def build(self):
+        z = []
+        values = {}
+        val = False
+        for x in self.level:
+            q = x.birth()
+            for y in q:
+                if y.get_value() not in values:
+                    z.append(y)
+                    values[y.get_value()] = "here"
+                    if(y.get_value() <= 0):
+                        val = True
+        self.level= z
+        return [self.level, val]
+
 class Course:
     def __init__(self, name):
         #this variable represents the name of the course
@@ -81,6 +130,29 @@ class Student:
         return self.course
     def get_year_group(self):
         return self.year_group
+        
+def tree_user(classrooms, value): 
+    space =   sum([x * len(classrooms[x]) for x in classrooms])
+    if(space < value):
+        print("VALUE TOO LARGE",space, value)
+        return False 
+    z = tree_builder(classrooms, value)
+    x = []
+    nonzero = True
+
+    while nonzero:
+        x = z.build()
+        nonzero = not x[1] 
+    min_val = -98765434567
+    min_node = None
+    for node in x[0]:
+        if node.get_value() > min_val and node.get_value() <= 0:
+            if min_node != None and len(node.get_steps()) >= len(min_node.get_steps()):
+                pass                 
+            else:       
+                min_val = node.get_value()
+                min_node = node
+    return(min_node.get_steps())
 
 class Slot:
     def __init__(self, classrooms):
@@ -89,12 +161,26 @@ class Slot:
         self.courses = []       
         self.classrooms = classrooms
         self.available_space = sum([x * len(self.classrooms[x]) for x in self.classrooms])
-
-        def get_available_space(self):
-            return self.available_space
-        def assign(self, course):
-            pass
-        
+    def get_courses(self):
+        return self.courses
+    def get_available_space(self):
+        return self.available_space
+    def assign(self, course):
+        size = course.get_size()
+        course_classrooms = tree_user(self.classrooms, size)
+        if (course_classrooms):
+            for x in course_classrooms:
+                room = self.classrooms[x][0]
+                #give course classroom update_classrooms()
+                course.update_classrooms(room)
+                #reduce available space
+                self.available_space -= x
+                self.courses.append(course)
+                # reduce self classrooms
+                if(len(self.classrooms[x]) == 1 ):
+                    del self.classrooms[x]
+                else:
+                    self.classrooms[x].pop(0)            
 
 def scheduler(exam_period, courses):
     ''' 
@@ -128,7 +214,6 @@ def scheduler(exam_period, courses):
         my_queue.sort(key=lambda x: len(x.get_red()), reverse=True)
 
     return (scheduled, unscheduled)
-
 
 def excel_to_csv(excel_file_name):
     file_as_df = pd.read_excel(excel_file_name, header=0)
@@ -218,39 +303,23 @@ def get_best_slot(unscheduled_courses, slots):
                 elif rating[0] == min:
                     unscheduled_best[x.get_name()]. append([y, rating[1]])
         return unscheduled_best
-def order_best_slot(best_slot, num_days):
-    new_list = [[] for x in range(num_days)]
-    for x in best_slot:
-        for y in best_slot[x]:
-            new_list[y[0]].append({x:y[1]})
-    return new_list
-def classroom_assigner(classrooms, scheduled_courses, unscheduled_and_best):
+def classroom_assigner(classrooms, scheduled_courses):
     final_day_slots = [[] for _ in range(len(scheduled_courses))]
     for x in range(len(scheduled_courses)):
         to_be_scheduled = scheduled_courses[x]
-        unscheduled_that_fit = unscheduled_and_best[x]
-        final_day_slots[x] = assignments(to_be_scheduled,] unscheduled_that_fit, classrooms)
+        final_day_slots[x] = assignments(to_be_scheduled, classrooms)
     return final_day_slots
 
-def assignments(courses, possible_fittings, classrooms):
-    eight_am = Slot(classrooms)
-    one_pm = Slot(classrooms)
-    clashes = []
-    if possible_fittings:
-        for x in possible_fittings:
-            for y in x:
-                clashes.extend(x[y])
-    clashes = list(set(clashes))
-    courses = sorted(courses, key=lambda course: (course.get_name() not in clashes, course.get_size()))
-
+def assignments(courses, classrooms):
+    eight_am = Slot(copy.deepcopy(classrooms))
+    one_pm = Slot(copy.deepcopy(classrooms))
+    
     for x in courses:
         if (one_pm.get_available_space() >= x.get_size()):
             one_pm.assign(x)
-        else:
+        elif(eight_am.get_available_space() >= x.get_size()):
             eight_am.assign(x)
-
     return [eight_am, one_pm]
-
 
 def main(enrol_excel_name, classroom_excel_name, num_days):
     variables = prep_student_and_courses(enrol_excel_name)
@@ -258,13 +327,15 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     students = variables[1]
     course_index_hash_map = variables[2]
     classrooms = prep_classroom_data(classroom_excel_name)
+    print(classrooms)
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
     print(len(courses), len(final_out[1]))  
     best_slots = get_best_slot(final_out[1], final_out[0])
-    unscheduled_with_best_slots = order_best_slot(best_slots, num_days)
-    # final_arrangement = classroom_assigner(classrooms, final_out[0], unscheduled_with_best_slots)
-    print([x.get_size() for x in courses])
+    final_assignment = classroom_assigner(classrooms, final_out[0])
+    
+
+
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
