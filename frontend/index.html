@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Barbie's Timetable Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Barbie's Timetable Generator</h1>
+
+      <form method="post" action="../index.php" id="uploadForm" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="student_data">Student Data File (Excel)</label>
+          <input type="file" id="student_data" name="student_data" accept=".xlsx, .xls" required />
+        </div>
+
+        <div class="form-group">
+          <label for="classroom_data">Classroom Data File (Excel)</label>
+          <input type="file" id="classroom_data" name="classroom_data" accept=".xlsx, .xls" required />
+        </div>
+
+        <div class="button-container">
+          <button type="submit">Generate</button>
+        </div>
+        <div id="results" class="hidden mt-4">
+            <p id = "error_reporting"></p>
+          </div>
+    </form>
+
+    </div>
+  </div>
+
+  <!-- <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const uploadForm = document.getElementById("uploadForm")
+      const resultsDiv = document.getElementById("results")
+      const fileList = document.getElementById("file-list")
+
+      uploadForm.addEventListener("submit", (e) => {
+        e.preventDefault()
+
+        const formData = new FormData()
+        formData.append("student_data", document.getElementById("student_data").files[0])
+        formData.append("classroom_data", document.getElementById("classroom_data").files[0])
+
+        fetch("../index.php", {
+          method: "POST",
+          body: formData,
+        })
+      })
+    })
+  </script> -->
+</body>
+</html>

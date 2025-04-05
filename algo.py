@@ -335,7 +335,5 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     best_slots = get_best_slot(final_out[1], final_out[0])
     final_assignment = classroom_assigner(classrooms, final_out[0])
     
-
-
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
