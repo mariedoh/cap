@@ -1,5 +1,7 @@
 import pandas as pd
 import copy
+import sys 
+import json
 
 class Node:
     def __init__(self, options, value, steps):
@@ -242,10 +244,10 @@ def prep_student_and_courses(enrol_excel_name):
         index +=1
 
     #Setting up student objects
-    students = enrol_df["Generated ID"].unique()
+    students = enrol_df["Student ID"].unique()
     for id in students:
         #get all the rows associated with the student
-        student_set = enrol_df[enrol_df["Generated ID"] == id]
+        student_set = enrol_df[enrol_df["Student ID"] == id]
 
         #identify the student's program
         student_program = student_set["Student Program"].iloc[[0]]
@@ -273,7 +275,7 @@ def prep_classroom_data(class_excel_name):
     classes = excel_to_csv(class_excel_name)
     room_sizes = classes['Capacity'].unique().tolist()
     for x in room_sizes:
-        classrooms[x] = classes[classes["Capacity"] == x]["Classroom "].unique().tolist()
+        classrooms[x] = classes[classes["Capacity"] == x]["Name"].unique().tolist()
     return classrooms
 
 def prep_output(courses, num_days):
@@ -322,18 +324,45 @@ def assignments(courses, classrooms):
     return [eight_am, one_pm]
 
 def main(enrol_excel_name, classroom_excel_name, num_days):
-    variables = prep_student_and_courses(enrol_excel_name)
+    try:
+        variables = prep_student_and_courses(enrol_excel_name)
+    except:
+        return json.dumps({
+        "success": False,
+        "message": "Invalid Student Data! Check Hint",
+        "export_path": ""
+    })
     courses = variables[0]
     students = variables[1]
     course_index_hash_map = variables[2]
-    classrooms = prep_classroom_data(classroom_excel_name)
-    print(classrooms)
+    try:
+        classrooms = prep_classroom_data(classroom_excel_name)
+    except:
+        return json.dumps({
+        "success": False,
+        "message": "Invalid Classroom Data! Check Hint",
+        "export_path": ""
+        })
+
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
-    print(len(courses), len(final_out[1]))  
     best_slots = get_best_slot(final_out[1], final_out[0])
     final_assignment = classroom_assigner(classrooms, final_out[0])
+    #final line to get export path
+    return json.dumps({
+        "success": True,
+        "message": "Scheduling Complete!",
+        "export_path": "export_path"
+    })
+
     
 course_index_hash_map = {}
-main("original.xlsx", "classrooms.xlsx", 8)
+if __name__ == "__main__":
+    # Get CLI arguments
+    student_file = sys.argv[1]
+    classroom_file = sys.argv[2]
+    param = int(sys.argv[3])
+
+    result = main(student_file, classroom_file, param)
+    print(result)     

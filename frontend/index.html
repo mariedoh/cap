@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+  <div id = "container" class="container">
     <div class="card">
       <h1>Barbie's Timetable Generator</h1>
 
-      <form method="post" action="../index.php" id="uploadForm" enctype="multipart/form-data">
+      <form id="uploadForm" enctype="multipart/form-data">
         <div class="form-group">
           <label for="student_data">Student Data File (Excel)</label>
           <input type="file" id="student_data" name="student_data" accept=".xlsx, .xls" required />
@@ -28,30 +28,27 @@
         <div id="results" class="hidden mt-4">
             <p id = "error_reporting"></p>
           </div>
-    </form>
+      </form>
+    </div>
+  </div>
+  <!-- Lightbulb Icon for Modal Trigger -->
+  <div class="info-icon" id="infoIcon">
+    <img src="lightbulb_icon.png" alt="Info">
+  </div>
 
+  <!-- Modal -->
+  <div id="infoModal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2>How to Structure Excel Sheets</h2>
+      <ul>
+        <li>Make sure the student data sheet has the headers: <b>Student ID</b>, <b>Course Name</b>, <b>Type</b>, <b>Course Category</b>,  <b>Course Sub Category</b>,  <b>Student Program</b>.</li>
+        <li>Ensure the classroom sheet has the columns <b>Name, Capacity</b>.</li>
+        <li>And double-check that data types (text, numbers) are consistent within each column.</li>
+      </ul>
     </div>
   </div>
 
-  <!-- <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const uploadForm = document.getElementById("uploadForm")
-      const resultsDiv = document.getElementById("results")
-      const fileList = document.getElementById("file-list")
-
-      uploadForm.addEventListener("submit", (e) => {
-        e.preventDefault()
-
-        const formData = new FormData()
-        formData.append("student_data", document.getElementById("student_data").files[0])
-        formData.append("classroom_data", document.getElementById("classroom_data").files[0])
-
-        fetch("../index.php", {
-          method: "POST",
-          body: formData,
-        })
-      })
-    })
-  </script> -->
+  <script src="script.js"></script>
 </body>
 </html>
