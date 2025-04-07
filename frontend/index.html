@@ -22,19 +22,40 @@
           <input type="file" id="classroom_data" name="classroom_data" accept=".xlsx, .xls" required />
         </div>
 
-        <div class="button-container">
-          <button type="submit">Generate</button>
-        </div>
-        <div id="results" class="hidden mt-4">
-            <p id = "error_reporting"></p>
+          <div class="form-group">
+            <table>
+              <tr>
+                <td>
+                  <label for="enableNumberInput">Choose your own exam period:</label>
+                </td>
+                <td>
+                  <input type="checkbox" id="enableNumberInput" />
+                </td>
+            </tr>
+              <tr id = "numberInputContainer">
+                <td>
+                  <label for="numberInput">Enter an Exam Period</label>
+                </td>
+                <td>
+                  <input type="number" id="numberInput" name="numberInput" />
+                </td>
+              </tr>
+            </table>
+          </div>
+          <!-- Lightbulb Icon for Modal Trigger -->
+          <div class="info-icon" id="infoIcon">
+            <img src="lightbulb.jpeg" alt="Info">
+          </div>
+          <div class="button-container">
+            <button type="submit">Generate</button>
+          </div>
+          <div id="results" class="hidden mt-4">
+              <p id = "error_reporting"></p>
           </div>
       </form>
     </div>
   </div>
-  <!-- Lightbulb Icon for Modal Trigger -->
-  <div class="info-icon" id="infoIcon">
-    <img src="lightbulb_icon.png" alt="Info">
-  </div>
+ 
 
   <!-- Modal -->
   <div id="infoModal">
@@ -48,6 +69,9 @@
       </ul>
     </div>
   </div>
+
+  
+  
 
   <script src="script.js"></script>
 </body>

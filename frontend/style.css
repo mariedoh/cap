@@ -183,3 +183,7 @@ button:hover {
 .close:hover {
   color: #ff1493;
 }
+
+#numberInputContainer{
+  display: none;
+}

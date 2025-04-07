@@ -353,7 +353,7 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     return json.dumps({
         "success": True,
         "message": "Scheduling Complete!",
-        "export_path": "export_path"
+        "export_path": "\../results/results.xlsx"
     })
 
     

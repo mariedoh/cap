@@ -24,6 +24,22 @@ window.addEventListener("click", function(event) {
   }
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  const enableNumberInputCheckbox = document.getElementById("enableNumberInput");
+  const numberInputContainer = document.getElementById("numberInputContainer");
+
+  // Toggle visibility of the number input field when checkbox is clicked
+  enableNumberInputCheckbox.addEventListener("change", () => {
+    if (enableNumberInputCheckbox.checked) {
+      numberInputContainer.style.display = "table-row"; // Show the row
+    } else {
+      numberInputContainer.style.display = "none"; // Hide the row
+    }
+  });
+  // Initially hide the number input field
+  numberInputContainer.style.display = "none";
+});
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const uploadForm = document.getElementById("uploadForm")
