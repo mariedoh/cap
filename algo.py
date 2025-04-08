@@ -1,6 +1,58 @@
 import pandas as pd
-import random
-import requests
+import copy
+import sys 
+import json
+from openpyxl import load_workbook
+
+class Node:
+    def __init__(self, options, value, steps):
+        self.options = options
+        self.value = value
+        self.steps = steps
+        self.children = []
+    def get_options(self):
+        return self.options
+    def get_value(self):
+        return self.value
+    def get_steps(self):
+        return self.steps
+    def birth(self):
+        for x in self.options:
+            x= int(x)
+            new_value = self.value - x
+            new_steps = self.steps + [x]
+            check = len(self.options[x])
+            for_kids = copy.deepcopy(self.options)
+
+            if (check <= 1):
+                del for_kids[x]
+            else:
+                for_kids[x].pop()
+            
+            self.children.append(Node(for_kids, new_value, new_steps)) 
+
+        return self.children
+
+class tree_builder:
+    def __init__(self, classrooms, value):
+        self.head = Node(classrooms, value, [])
+        self.level = [self.head]
+
+    def build(self):
+        z = []
+        values = {}
+        val = False
+        for x in self.level:
+            q = x.birth()
+            for y in q:
+                if y.get_value() not in values:
+                    z.append(y)
+                    values[y.get_value()] = "here"
+                    if(y.get_value() <= 0):
+                        val = True
+        self.level= z
+        return [self.level, val]
+
 class Course:
     def __init__(self, name):
         #this variable represents the name of the course
@@ -11,14 +63,17 @@ class Course:
         #this represents the courses that this course cannot be grouped with
         '''this variable represents the students taking the course as a major course 
         elective and is to be used in implementing the soft constraints'''
-        self.majors = 0;
-        self.size = None;
-        self.color = 9003;
-        self.classrooms = [];
+        self.majors = 0
+        self.size = None
+        self.color = 9003
+        self.classrooms = []
+        self.breakdown = []
 
     #mutator methods for the course attributes
     def  set_students(self, student):
         self.students.append(student)
+    def set_breakdown(self, breakdown):
+        self.breakdown = breakdown
     def  set_majors(self):
         self.majors += 1
     def set_name(self, name):
@@ -37,6 +92,8 @@ class Course:
         self.color = color
 
     #accessor method for name, students and majors variables
+    def get_breakdown(self):
+        return self.breakdown;
     def get_color(self):
         return self.color
     def get_classrooms(self):
@@ -81,6 +138,29 @@ class Student:
         return self.course
     def get_year_group(self):
         return self.year_group
+        
+def tree_user(classrooms, value): 
+    space =   sum([x * len(classrooms[x]) for x in classrooms])
+    if(space < value):
+        print("VALUE TOO LARGE",space, value)
+        return False 
+    z = tree_builder(classrooms, value)
+    x = []
+    nonzero = True
+
+    while nonzero:
+        x = z.build()
+        nonzero = not x[1] 
+    min_val = -98765434567
+    min_node = None
+    for node in x[0]:
+        if node.get_value() > min_val and node.get_value() <= 0:
+            if min_node != None and len(node.get_steps()) >= len(min_node.get_steps()):
+                pass                 
+            else:       
+                min_val = node.get_value()
+                min_node = node
+    return(min_node.get_steps())
 
 class Slot:
     def __init__(self, classrooms):
@@ -89,12 +169,26 @@ class Slot:
         self.courses = []       
         self.classrooms = classrooms
         self.available_space = sum([x * len(self.classrooms[x]) for x in self.classrooms])
-
-        def get_available_space(self):
-            return self.available_space
-        def assign(self, course):
-            pass
-        
+    def get_courses(self):
+        return self.courses
+    def get_available_space(self):
+        return self.available_space
+    def assign(self, course):
+        size = course.get_size()
+        course_classrooms = tree_user(self.classrooms, size)
+        if (course_classrooms):
+            self.courses.append(course)
+            for x in course_classrooms:
+                room = self.classrooms[x][0]
+                #give course classroom update_classrooms()
+                course.update_classrooms(room)
+                #reduce available space
+                self.available_space -= x
+                # reduce self classrooms
+                if(len(self.classrooms[x]) == 1 ):
+                    del self.classrooms[x]
+                else:
+                    self.classrooms[x].pop(0)            
 
 def scheduler(exam_period, courses):
     ''' 
@@ -129,7 +223,6 @@ def scheduler(exam_period, courses):
 
     return (scheduled, unscheduled)
 
-
 def excel_to_csv(excel_file_name):
     file_as_df = pd.read_excel(excel_file_name, header=0)
     return file_as_df
@@ -141,6 +234,7 @@ def prep_student_and_courses(enrol_excel_name):
     #opening the file as a panda dataframes and 
     #dropping all unnecessary courses that are not being scheduled
     enrol_df = drop_unneccessary_columns(excel_to_csv(enrol_excel_name))
+    enrol_df["year_program"] = enrol_df["Student Program"] + " "+ enrol_df["Student ID"].astype(str).str[-4:]
     #initializing the list of Course objects to be scheduled
     courses = []
     students = []
@@ -151,16 +245,19 @@ def prep_student_and_courses(enrol_excel_name):
     for x in courses_in_set:
         #initialising the course
         new_course = Course(x)
+        
+        breakdown = enrol_df[enrol_df["Course Name"] == x]["year_program"].value_counts().index.to_list()
+        new_course.set_breakdown(breakdown)
         courses.append(new_course)
         #hash its location for quick retrieval later
         course_index_hash_map[x] = index
         index +=1
 
     #Setting up student objects
-    students = enrol_df["Generated ID"].unique()
+    students = enrol_df["Student ID"].unique()
     for id in students:
         #get all the rows associated with the student
-        student_set = enrol_df[enrol_df["Generated ID"] == id]
+        student_set = enrol_df[enrol_df["Student ID"] == id]
 
         #identify the student's program
         student_program = student_set["Student Program"].iloc[[0]]
@@ -188,7 +285,7 @@ def prep_classroom_data(class_excel_name):
     classes = excel_to_csv(class_excel_name)
     room_sizes = classes['Capacity'].unique().tolist()
     for x in room_sizes:
-        classrooms[x] = classes[classes["Capacity"] == x]["Classroom "].unique().tolist()
+        classrooms[x] = classes[classes["Capacity"] == x]["Name"].unique().tolist()
     return classrooms
 
 def prep_output(courses, num_days):
@@ -218,39 +315,61 @@ def get_best_slot(unscheduled_courses, slots):
                 elif rating[0] == min:
                     unscheduled_best[x.get_name()]. append([y, rating[1]])
         return unscheduled_best
-def order_best_slot(best_slot, num_days):
-    new_list = [[] for x in range(num_days)]
-    for x in best_slot:
-        for y in best_slot[x]:
-            new_list[y[0]].append({x:y[1]})
-    return new_list
-def classroom_assigner(classrooms, scheduled_courses, unscheduled_and_best):
+def classroom_assigner(classrooms, scheduled_courses):
     final_day_slots = [[] for _ in range(len(scheduled_courses))]
     for x in range(len(scheduled_courses)):
         to_be_scheduled = scheduled_courses[x]
-        unscheduled_that_fit = unscheduled_and_best[x]
-        final_day_slots[x] = assignments(to_be_scheduled, unscheduled_that_fit, classrooms)
+        final_day_slots[x] = assignments(to_be_scheduled, classrooms)
     return final_day_slots
 
-def assignments(courses, possible_fittings, classrooms):
-    eight_am = Slot(classrooms)
-    one_pm = Slot(classrooms)
-    clashes = []
-    if possible_fittings:
-        for x in possible_fittings:
-            for y in x:
-                clashes.extend(x[y])
-    clashes = list(set(clashes))
-    courses = sorted(courses, key=lambda course: (course.get_name() not in clashes, course.get_size()))
-
+def assignments(courses, classrooms):
+    eight_am = Slot(copy.deepcopy(classrooms))
+    one_pm = Slot(copy.deepcopy(classrooms))
+    
     for x in courses:
         if (one_pm.get_available_space() >= x.get_size()):
             one_pm.assign(x)
-        else:
+        elif(eight_am.get_available_space() >= x.get_size()):
             eight_am.assign(x)
-
     return [eight_am, one_pm]
 
+def individual_dfs(day, time, slot):
+    daytimes = [day+ " "+ time for x in range(len(slot.get_courses()))]
+    cours = [x.get_name() for x in slot.get_courses()]
+    rooms = [x.get_classrooms() for x in slot.get_courses()]
+    breakdowns = [x.get_breakdown() for x in slot.get_courses()]
+    return pd.DataFrame( list(zip(daytimes, cours, rooms, breakdowns)), columns=["Day - Time", 'Courses', 'Location', 'Class/Major of Registered Students'])
+
+def order_excel(final):
+    og_df = pd.DataFrame()
+    for x in range(len(final)):
+        day = final[x]
+        eight = individual_dfs(f"Day {x+1}","Eight AM",day[0])
+        one = individual_dfs(f"Day {x+1}" , "One PM", day[1])
+
+        og_df = pd.concat([og_df, eight,one], ignore_index=True)
+    og_df['Class/Major of Registered Students'] = og_df['Class/Major of Registered Students'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
+    og_df['Location'] = og_df['Location'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
+ 
+    excel_path = "testing.xlsx"
+    aight = og_df.to_excel(excel_path, index= False)
+    wb = load_workbook(excel_path)
+    ws = wb.active
+
+    current_value = None
+    start_row = 2  # Excel rows (1-indexed, with header at row 1)
+    for i in range(2, len(og_df) + 2):  # 2 to 5
+        cell_value = ws[f"A{i}"].value
+        if cell_value != current_value:
+            if current_value is not None and start_row != i - 1:
+                ws.merge_cells(start_row=start_row, start_column=1, end_row=i - 1, end_column=1)
+            current_value = cell_value
+            start_row = i
+    # Final merge if last rows are the same
+    if start_row != len(og_df) + 1:
+        ws.merge_cells(start_row=start_row, start_column=1, end_row=len(og_df) + 1, end_column=1)
+    wb.save(excel_path)
+    
 
 def main(enrol_excel_name, classroom_excel_name, num_days):
     variables = prep_student_and_courses(enrol_excel_name)
@@ -261,11 +380,10 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
-    print(len(courses), len(final_out[1]))  
     best_slots = get_best_slot(final_out[1], final_out[0])
-    print(classrooms)
-    # unscheduled_with_best_slots = order_best_slot(best_slots, num_days)
-    # final_arrangement = classroom_assigner(classrooms, final_out[0], unscheduled_with_best_slots)
+    final_assignment = classroom_assigner(classrooms, final_out[0])
+    final_excel = order_excel(final_assignment)
 
+    
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8)
