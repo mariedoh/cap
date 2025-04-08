@@ -2,6 +2,7 @@ import pandas as pd
 import copy
 import sys 
 import json
+from openpyxl import load_workbook
 
 class Node:
     def __init__(self, options, value, steps):
@@ -62,14 +63,17 @@ class Course:
         #this represents the courses that this course cannot be grouped with
         '''this variable represents the students taking the course as a major course 
         elective and is to be used in implementing the soft constraints'''
-        self.majors = 0;
-        self.size = None;
-        self.color = 9003;
-        self.classrooms = [];
+        self.majors = 0
+        self.size = None
+        self.color = 9003
+        self.classrooms = []
+        self.breakdown = []
 
     #mutator methods for the course attributes
     def  set_students(self, student):
         self.students.append(student)
+    def set_breakdown(self, breakdown):
+        self.breakdown = breakdown
     def  set_majors(self):
         self.majors += 1
     def set_name(self, name):
@@ -88,6 +92,8 @@ class Course:
         self.color = color
 
     #accessor method for name, students and majors variables
+    def get_breakdown(self):
+        return self.breakdown;
     def get_color(self):
         return self.color
     def get_classrooms(self):
@@ -171,13 +177,13 @@ class Slot:
         size = course.get_size()
         course_classrooms = tree_user(self.classrooms, size)
         if (course_classrooms):
+            self.courses.append(course)
             for x in course_classrooms:
                 room = self.classrooms[x][0]
                 #give course classroom update_classrooms()
                 course.update_classrooms(room)
                 #reduce available space
                 self.available_space -= x
-                self.courses.append(course)
                 # reduce self classrooms
                 if(len(self.classrooms[x]) == 1 ):
                     del self.classrooms[x]
@@ -228,6 +234,7 @@ def prep_student_and_courses(enrol_excel_name):
     #opening the file as a panda dataframes and 
     #dropping all unnecessary courses that are not being scheduled
     enrol_df = drop_unneccessary_columns(excel_to_csv(enrol_excel_name))
+    enrol_df["year_program"] = enrol_df["Student Program"] + " "+ enrol_df["Student ID"].astype(str).str[-4:]
     #initializing the list of Course objects to be scheduled
     courses = []
     students = []
@@ -238,6 +245,9 @@ def prep_student_and_courses(enrol_excel_name):
     for x in courses_in_set:
         #initialising the course
         new_course = Course(x)
+        
+        breakdown = enrol_df[enrol_df["Course Name"] == x]["year_program"].value_counts().index.to_list()
+        new_course.set_breakdown(breakdown)
         courses.append(new_course)
         #hash its location for quick retrieval later
         course_index_hash_map[x] = index
@@ -323,6 +333,43 @@ def assignments(courses, classrooms):
             eight_am.assign(x)
     return [eight_am, one_pm]
 
+def individual_dfs(day, time, slot):
+    daytimes = [day+ " "+ time for x in range(len(slot.get_courses()))]
+    cours = [x.get_name() for x in slot.get_courses()]
+    rooms = [x.get_classrooms() for x in slot.get_courses()]
+    breakdowns = [x.get_breakdown() for x in slot.get_courses()]
+    return pd.DataFrame( list(zip(daytimes, cours, rooms, breakdowns)), columns=["Day - Time", 'Courses', 'Location', 'Class/Major of Registered Students'])
+
+def order_excel(final):
+    og_df = pd.DataFrame()
+    for x in range(len(final)):
+        day = final[x]
+        eight = individual_dfs(f"Day {x+1}","Eight AM",day[0])
+        one = individual_dfs(f"Day {x+1}" , "One PM", day[1])
+
+        og_df = pd.concat([og_df, eight,one], ignore_index=True)
+    og_df['Class/Major of Registered Students'] = og_df['Class/Major of Registered Students'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
+    og_df['Location'] = og_df['Location'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
+ 
+    excel_path = "testing.xlsx"
+    aight = og_df.to_excel(excel_path, index= False)
+    wb = load_workbook(excel_path)
+    ws = wb.active
+
+    current_value = None
+    start_row = 2  # Excel rows (1-indexed, with header at row 1)
+    for i in range(2, len(og_df) + 2):  # 2 to 5
+        cell_value = ws[f"A{i}"].value
+        if cell_value != current_value:
+            if current_value is not None and start_row != i - 1:
+                ws.merge_cells(start_row=start_row, start_column=1, end_row=i - 1, end_column=1)
+            current_value = cell_value
+            start_row = i
+    # Final merge if last rows are the same
+    if start_row != len(og_df) + 1:
+        ws.merge_cells(start_row=start_row, start_column=1, end_row=len(og_df) + 1, end_column=1)
+    wb.save(excel_path)
+    
 def main(enrol_excel_name, classroom_excel_name, num_days):
     try:
         variables = prep_student_and_courses(enrol_excel_name)
@@ -350,6 +397,8 @@ def main(enrol_excel_name, classroom_excel_name, num_days):
     best_slots = get_best_slot(final_out[1], final_out[0])
     final_assignment = classroom_assigner(classrooms, final_out[0])
     #final line to get export path
+    final_excel = order_excel(final_assignment)
+
     return json.dumps({
         "success": True,
         "message": "Scheduling Complete!",
