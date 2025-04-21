@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Barbie's Timetable Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id = "container" class="container">
+    <div class="card">
+      <h1>Barbie's Timetable Generator</h1>
+
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="student_data">Student Data File (Excel)</label>
+          <input type="file" id="student_data" name="student_data" accept=".xlsx, .xls" required />
+        </div>
+
+        <div class="form-group">
+          <label for="classroom_data">Classroom Data File (Excel)</label>
+          <input type="file" id="classroom_data" name="classroom_data" accept=".xlsx, .xls" required />
+        </div>
+
+          <div class="form-group">
+            <table>
+              <tr>
+                <td>
+                  <label for="enableNumberInput">Choose your own exam period:</label>
+                </td>
+                <td>
+                  <input type="checkbox" id="enableNumberInput" />
+                </td>
+            </tr>
+              <tr id = "numberInputContainer">
+                <td>
+                  <label for="numberInput">Enter an Exam Period</label>
+                </td>
+                <td>
+                  <input type="number" id="numberInput" name="numberInput" />
+                </td>
+              </tr>
+            </table>
+          </div>
+          <!-- Lightbulb Icon for Modal Trigger -->
+          <div class="info-icon" id="infoIcon">
+            <img src="lightbulb.jpeg" alt="Info">
+          </div>
+          <div class="button-container">
+            <button type="submit">Generate</button>
+          </div>
+          <div id="results" class="hidden mt-4">
+              <p id = "error_reporting"></p>
+          </div>
+      </form>
+    </div>
+  </div>
+ 
+
+  <!-- Modal -->
+  <div id="infoModal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2>How to Structure Excel Sheets</h2>
+      <ul>
+        <li>Make sure the student data sheet has the headers: <b>Student ID</b>, <b>Course Name</b>, <b>Type</b>, <b>Course Category</b>,  <b>Course Sub Category</b>,  <b>Student Program</b>.</li>
+        <li>Ensure the classroom sheet has the columns <b>Name, Capacity</b>.</li>
+        <li>And double-check that data types (text, numbers) are consistent within each column.</li>
+      </ul>
+    </div>
+  </div>
+
+  
+  
+
+  <script src="script.js"></script>
+</body>
+</html>

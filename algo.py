@@ -3,10 +3,6 @@ import copy
 import sys 
 import json
 from openpyxl import load_workbook
-from datetime import date
-import datetime
-import holidays
-hope = holidays.Ghana()
 
 class Node:
     def __init__(self, options, value, steps):
@@ -247,6 +243,8 @@ def prep_student_and_courses(enrol_excel_name):
     for x in courses_in_set:
         #initialising the course
         new_course = Course(x)
+        courses.append(new_course)
+        #hash its location for quick retrieval later
         course_index_hash_map[x] = index
         index+=1
         breakdown = enrol_df[enrol_df["Course Name"] == x]["year_program"].value_counts().index.to_list()
@@ -257,7 +255,8 @@ def prep_student_and_courses(enrol_excel_name):
     students = enrol_df["Student ID"].unique()
     for id in students:
         #get all the rows associated with the student
-        student_set = enrol_df[enrol_df["Student ID"] == id]
+        student_set = enrol_df[enrol_df["Generated ID"] == id]
+
         #identify the student's program
         student_program = student_set["Student Program"].iloc[[0]]
         #use that data to create the student object
@@ -321,120 +320,61 @@ def get_best_slot(unscheduled_courses, slots, courses):
                 elif num_clashes[0] == min:
                     unscheduled_best[x.get_name()]. append([y, num_clashes[1]])
         return unscheduled_best
-def order_best_slot(unscheduled_best, num_days):
-    actual_best = [[[], []] for x in range(num_days)]
-    for x in unscheduled_best:
-        y = unscheduled_best[x]
-        for z in y:
-            #course that fit
-            actual_best[int(z[0])][0].extend([x])
-            #clashing
-            if z[1][0] not in actual_best[z[0]][1]:
-                actual_best[z[0]][1].extend(z[1])
-    return actual_best
-def classroom_assigner(classrooms, scheduled_courses, best_slots):
+def order_best_slot(best_slot, num_days):
+    new_list = [[] for x in range(num_days)]
+    for x in best_slot:
+        for y in best_slot[x]:
+            new_list[y[0]].append({x:y[1]})
+    return new_list
+def classroom_assigner(classrooms, scheduled_courses, unscheduled_and_best):
     final_day_slots = [[] for _ in range(len(scheduled_courses))]
     for x in range(len(scheduled_courses)):
         to_be_scheduled = scheduled_courses[x]
-        clashing = best_slots[x][1]
-        final_day_slots[x] = assignments(to_be_scheduled, classrooms, clashing)
+        unscheduled_that_fit = unscheduled_and_best[x]
+        final_day_slots[x] = assignments(to_be_scheduled, unscheduled_that_fit, classrooms)
     return final_day_slots
 
-def assignments(cour, classrooms, clashing):
-    eight_am = Slot(copy.deepcopy(classrooms))
-    one_pm = Slot(copy.deepcopy(classrooms))
-    #order courses by putting clashing courses first
-    cour = sorted(cour, key=lambda x: x.get_name() not in clashing)  
-    for x in cour:
+def assignments(courses, possible_fittings, classrooms):
+    eight_am = Slot(classrooms)
+    one_pm = Slot(classrooms)
+    clashes = []
+    if possible_fittings:
+        for x in possible_fittings:
+            for y in x:
+                clashes.extend(x[y])
+    clashes = list(set(clashes))
+    courses = sorted(courses, key=lambda course: (course.get_name() not in clashes, course.get_size()))
+
+    for x in courses:
         if (one_pm.get_available_space() >= x.get_size()):
             one_pm.assign(x)
         elif(eight_am.get_available_space() >= x.get_size()):
             eight_am.assign(x)
     return [eight_am, one_pm]
-    
 
-def individual_dfs(day, time, slot):
-    daytimes = [day+ " "+ time for x in range(len(slot.get_courses()))]
-    cours = [x.get_name() for x in slot.get_courses()]
-    rooms = [x.get_classrooms() for x in slot.get_courses()]
-    breakdowns = [x.get_breakdown() for x in slot.get_courses()]
-    tests = pd.DataFrame( list(zip(daytimes, cours, rooms, breakdowns)), columns=["Day - Time", 'Courses', 'Location', 'Class/Major of Registered Students'])
-    return tests
-def order_excel(final, dates):
-    og_df = pd.DataFrame()
-    for x in range(len(final)):
-        day = final[x]
-        eight = individual_dfs(f"{dates[x]}","Eight AM",day[0])
-        one = individual_dfs(f"{dates[x]}" , "One PM", day[1])
 
-        og_df = pd.concat([og_df, eight,one], ignore_index=True)
-    og_df['Class/Major of Registered Students'] = og_df['Class/Major of Registered Students'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
-    og_df['Location'] = og_df['Location'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
- 
-    excel_path = "final/final.xlsx"
-    aight = og_df.to_excel(excel_path, index= False)
-    wb = load_workbook(excel_path)
-    ws = wb.active
-
-    current_value = None
-    start_row = 2  # Excel rows (1-indexed, with header at row 1)
-    for i in range(2, len(og_df) + 2):  # 2 to 5
-        cell_value = ws[f"A{i}"].value
-        if cell_value != current_value:
-            if current_value is not None and start_row != i - 1:
-                ws.merge_cells(start_row=start_row, start_column=1, end_row=i - 1, end_column=1)
-            current_value = cell_value
-            start_row = i
-    # Final merge if last rows are the same
-    if start_row != len(og_df) + 1:
-        ws.merge_cells(start_row=start_row, start_column=1, end_row=len(og_df) + 1, end_column=1)
-    wb.save(excel_path)
-def get_dates(start_date, num_days):
-    date_c = start_date
-    y = []
-    x = 0
-    while x < num_days:
-        #if not a weekend or holdiay, add to list
-        if(date_c.weekday() <= 4 and not(date_c in hope)):
-            y.append(date_c.strftime("%d %B, %Y"))
-            x+=1
-            date_c = date_c + datetime.timedelta(days=1)
-        else:
-            date_c = date_c + datetime.timedelta(days=1)
-    return y
-
-def schedule_unscheduled(final_assignment, best_slots, courses):
-    for x in best_slots:
-        for y in range(len(best_slots[x])):
-            clashes = best_slots[x][y]
-            slots = final_assignment[clashes[0]]
-            course_clashes = clashes[1]
-            #if enough space in slot and no clashes within slot, assign.
-            if slots[0].get_available_space() >= courses[course_index_hash_map[x]].get_size() and len(list(set([x.get_name() for x in slots[0].get_courses()]) & set(course_clashes))) == 0 :
-                slots[0].assign(courses[course_index_hash_map[x]])
-                break
-            elif slots[1].get_available_space() >= courses[course_index_hash_map[x]].get_size() and len(list(set([x.get_name() for x in slots[1].get_courses()]) & set(course_clashes))) == 0 :
-                slots[1].assign(courses[course_index_hash_map[x]])
-                break
-            else:
-                break
-    return final_assignment
-
-def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
+def main(enrol_excel_name, classroom_excel_name, num_days):
     variables = prep_student_and_courses(enrol_excel_name)
     courses = variables[0]
     students = variables[1]
     course_index_hash_map = variables[2]
-    classrooms = prep_classroom_data(classroom_excel_name)
+    try:
+        classrooms = prep_classroom_data(classroom_excel_name)
+    except:
+        return json.dumps({
+        "success": False,
+        "message": "Invalid Classroom Data! Check Hint",
+        "export_path": ""
+        })
+
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
-    best_slots = get_best_slot(final_out[1], final_out[0], courses)
-    actual_best = order_best_slot(best_slots, num_days)
-    final_assignment = classroom_assigner(classrooms, final_out[0], actual_best)
-    final_fr = schedule_unscheduled(final_assignment, best_slots, courses)  
-    dates = get_dates(date(list_start_date[0], list_start_date[1], list_start_date[2]), num_days)
-    # final_excel = order_excel(final_fr, dates)
+    print(len(courses), len(final_out[1]))  
+    best_slots = get_best_slot(final_out[1], final_out[0])
+    print(classrooms)
+    # unscheduled_with_best_slots = order_best_slot(best_slots, num_days)
+    # final_arrangement = classroom_assigner(classrooms, final_out[0], unscheduled_with_best_slots)
 
 course_index_hash_map = {}
-main("original.xlsx", "classrooms.xlsx", 8, [2025, 4, 15])
+main("original.xlsx", "classrooms.xlsx", 8)
