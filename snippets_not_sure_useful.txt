@@ -1,2 +1,22 @@
-TO DO 
-1) Convert set up to function. 
+def schedule_unscheduled(final_assignment, best_slots, courses):
+    for x in best_slots:
+        for y in range(len(best_slots[x])):
+            clashes = best_slots[x][y]
+            slots = final_assignment[clashes[0]]
+            course_clashes = clashes[1]
+            #if enough space in slot and no clashes within slot, assign.
+            if slots[0].get_available_space() >= courses[course_index_hash_map[x]].get_size() and len(list(set([x.get_name() for x in slots[0].get_courses()]) & set(course_clashes))) == 0 :
+                slots[0].assign(courses[course_index_hash_map[x]])
+                print("I assigned, ", x, "to 8am in slot", clashes[0])
+                break
+            elif slots[1].get_available_space() >= courses[course_index_hash_map[x]].get_size() and len(list(set([x.get_name() for x in slots[1].get_courses()]) & set(course_clashes))) == 0 :
+                slots[1].assign(courses[course_index_hash_map[x]])
+                print("I assigned, ", x, "to 1pm in slot", clashes[0])b
+                break
+            else:
+                print(slots[0].get_available_space(), "\n", [x.get_name() for x in slots[0].get_courses()], "\n",courses[course_index_hash_map[x]].get_red(), "\n")
+                print(slots[1].get_available_space(),"\n", [x.get_name() for x in slots[1].get_courses()],"\n", courses[course_index_hash_map[x]].get_red(), "\n")
+                print("No space for ", x)
+                break
+    return final_assignment
+    pass
