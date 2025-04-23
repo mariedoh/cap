@@ -184,8 +184,10 @@ class Course:
         return True
     def get_compatibility_rating(self, others, courses):
         overlap = list(set([x.get_name() for x in others]) & set(self.red_flags)) 
-        num_stud_clashes = [courses[course_index_hash_map[x]].get_students() for x in overlap]
-        return [len(num_stud_clashes) , overlap]
+        num_clashing_students = 0
+        for x in overlap:
+            num_clashing_students += len(set(courses[course_index_hash_map[x]].get_students()) & set(self.get_students()))
+        return [num_clashing_students , overlap]
         
     def get_size(self):
         self.set_size(len(self.students))
@@ -306,7 +308,7 @@ def scheduler(exam_period, courses):
     This function takes a variable representing the number of days available for examinations and 
     the list of course objects to be scheduled and 
     Returns:
-        List: Courses that couldn't be scheduled 
+        set of scheduled and unscheduled courses
     '''
     unscheduled = []
     scheduled = []
@@ -314,23 +316,21 @@ def scheduler(exam_period, courses):
     visited = []
     start = courses[0]
     my_queue.append(start)
-
     while my_queue:
         current = my_queue.pop(0)
         reds = [courses[course_index_hash_map[x]] for x in current.get_red()]
-        colors = [y.get_color() for y in reds if y in visited]
+        colors = set([y.get_color() for y in reds if y in visited])
         for x in range(0, exam_period):
             if x not in colors:
                 current.set_color(x)
                 scheduled.append(current)
-                break
         visited.append(current)
         if current.get_color() not in range(0, exam_period):
             unscheduled.append(current)            
-        my_queue.extend([y for y in reds if y not in my_queue and y not in visited])
-        my_queue.sort(key=lambda x: len(x.get_red()), reverse=True)
-
+        my_queue.extend([y for y in courses if y not in reds and y not in visited and y not in my_queue])
+        my_queue.sort(key=lambda x: len([y for y in x.get_red() if y not in visited]), reverse=True)
     return (scheduled, unscheduled)
+
 
 def excel_to_csv(excel_file_name):
     file_as_df = pd.read_excel(excel_file_name, header=0)
@@ -362,7 +362,7 @@ def prep_student_and_courses(enrol_excel_name):
 
     #Setting up student objects
     students = enrol_df["Student ID"].unique()
-    students = enrol_df["Student ID"].unique()
+    students = enrol_df["Student ID"].unique()    
     for id in students:
         #get all the rows associated with the student
         student_set = enrol_df[enrol_df["Student ID"] == id]
@@ -426,9 +426,9 @@ def get_best_slot(unscheduled_courses, slots, courses):
                 if num_clashes[0] < min:
                     best_slot = y
                     min = num_clashes[0]
-                    unscheduled_best[x.get_name()]=[[y, num_clashes[1]]]
+                    unscheduled_best[x.get_name()]=[[y, num_clashes[1], num_clashes[0]]]
                 elif num_clashes[0] == min:
-                    unscheduled_best[x.get_name()]. append([y, num_clashes[1]])
+                    unscheduled_best[x.get_name()].append([y, num_clashes[1], num_clashes[0]])     
         return unscheduled_best
 def order_best_slot(unscheduled_best, num_days):
     actual_best = [[[], []] for x in range(num_days)]
@@ -457,7 +457,6 @@ def assignments(cour, classrooms, clashing):
     for x in cour:
         if (one_pm.get_available_space() >= x.get_size()):
             one_pm.assign(x)
-        elif(eight_am.get_available_space() >= x.get_size()):
         elif(eight_am.get_available_space() >= x.get_size()):
             eight_am.assign(x)
     return [eight_am, one_pm]
@@ -520,10 +519,10 @@ def schedule_unscheduled(final_assignment, best_slots, courses):
             slots = final_assignment[clashes[0]]
             course_clashes = clashes[1]
             #if enough space in slot and no clashes within slot, assign.
-            if slots[0].get_available_space() >= courses[course_index_hash_map[x]].get_size() and len(list(set([x.get_name() for x in slots[0].get_courses()]) & set(course_clashes))) == 0 :
+            if slots[0].get_available_space() >= courses[course_index_hash_map[x]].get_size() and courses[course_index_hash_map[x]].is_compatible(slots[0].get_courses()):
                 slots[0].assign(courses[course_index_hash_map[x]])
                 break
-            elif slots[1].get_available_space() >= courses[course_index_hash_map[x]].get_size() and len(list(set([x.get_name() for x in slots[1].get_courses()]) & set(course_clashes))) == 0 :
+            if slots[1].get_available_space() >= courses[course_index_hash_map[x]].get_size() and courses[course_index_hash_map[x]].is_compatible(slots[1].get_courses()):
                 slots[1].assign(courses[course_index_hash_map[x]])
                 break
             else:
@@ -543,7 +542,6 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
         "message": "Invalid Classroom Data! Check Hint",
         "export_path": ""
         })
-
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
@@ -552,7 +550,7 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
     final_assignment = classroom_assigner(classrooms, final_out[0], actual_best)
     final_fr = schedule_unscheduled(final_assignment, best_slots, courses)  
     dates = get_dates(date(list_start_date[0], list_start_date[1], list_start_date[2]), num_days)
-    # final_excel = order_excel(final_fr, dates)
+    final = order_excel(final_assignment, dates)
 
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8, [2025, 4, 15])

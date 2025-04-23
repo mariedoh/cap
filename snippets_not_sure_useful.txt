@@ -20,3 +20,17 @@ def schedule_unscheduled(final_assignment, best_slots, courses):
                 break
     return final_assignment
     pass
+
+
+    visited = []
+    for x in courses:
+        reds = [courses[course_index_hash_map[y]] for y in x.get_red()]
+        colors = set([y.get_color() for y in reds if y in visited])
+        for m in range(0, exam_period):
+            if m not in colors:
+                x.set_color(m)
+                scheduled.append(x)
+                break
+        visited.append(x)
+        if x.get_color() not in range(0, exam_period):
+            unscheduled.append(x)            
