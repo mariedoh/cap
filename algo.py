@@ -1,59 +1,5 @@
+import copy
 import pandas as pd
-import copy
-import sys 
-import json
-from openpyxl import load_workbook
-
-class Node:
-    def __init__(self, options, value, steps):
-        self.options = options
-        self.value = value
-        self.steps = steps
-        self.children = []
-    def get_options(self):
-        return self.options
-    def get_value(self):
-        return self.value
-    def get_steps(self):
-        return self.steps
-    def birth(self):
-        for x in self.options:
-            x= int(x)
-            new_value = self.value - x
-            new_steps = self.steps + [x]
-            check = len(self.options[x])
-            for_kids = copy.deepcopy(self.options)
-
-            if (check <= 1):
-                del for_kids[x]
-            else:
-                for_kids[x].pop()
-            
-            self.children.append(Node(for_kids, new_value, new_steps)) 
-
-        return self.children
-
-class tree_builder:
-    def __init__(self, classrooms, value):
-        self.head = Node(classrooms, value, [])
-        self.level = [self.head]
-
-    def build(self):
-        z = []
-        values = {}
-        val = False
-        for x in self.level:
-            q = x.birth()
-            for y in q:
-                if y.get_value() not in values:
-                    z.append(y)
-                    values[y.get_value()] = "here"
-                    if(y.get_value() <= 0):
-                        val = True
-        self.level= z
-        return [self.level, val]
-
-import copy
 import sys 
 import json
 from openpyxl import load_workbook
@@ -62,6 +8,7 @@ import datetime
 import holidays
 hope = holidays.Ghana()
 
+#to be used for classroom assignment tree
 class Node:
     def __init__(self, options, value, steps):
         self.options = options
@@ -91,6 +38,7 @@ class Node:
 
         return self.children
 
+#to be used for tree building for classroom assignment
 class tree_builder:
     def __init__(self, classrooms, value):
         self.head = Node(classrooms, value, [])
@@ -110,7 +58,7 @@ class tree_builder:
                         val = True
         self.level= z
         return [self.level, val]
-
+#main class
 class Course:
     def __init__(self, name):
         #this variable represents the name of the course
@@ -125,18 +73,13 @@ class Course:
         self.size = None
         self.color = 9003
         self.classrooms = []
-        self.breakdown = []
-        self.majors = 0
-        self.size = None
-        self.color = 9003
-        self.classrooms = []
+        #this is the breakdown of the different year groups of students taking this coursec, 
+        # ordered from largest to smallest year group proportion 
         self.breakdown = []
 
     #mutator methods for the course attributes
     def  set_students(self, student):
         self.students.append(student)
-    def set_breakdown(self, breakdown):
-        self.breakdown = breakdown
     def set_breakdown(self, breakdown):
         self.breakdown = breakdown
     def  set_majors(self):
@@ -148,15 +91,18 @@ class Course:
     def set_size(self, size):
         self.size = size
     def update_red(self, red):
+        #update red flags using a single course
         for x in red:
             if x not in self.red_flags and x != self.name:
                 self.red_flags.append(x)
     def set_red(self, red):
+        #update red flags using an entire list
         self.red_flags = red
     def set_color(self, color):
+        #to be used for graph colouring
         self.color = color
 
-    #accessor method for name, students and majors variables
+    #accessor methods
     def get_breakdown(self):
         return self.breakdown;
     def get_breakdown(self):
@@ -174,24 +120,31 @@ class Course:
     def get_majors(self):
         return self.majors
     def get_size(self):
-        return self.size
+        self.set_size(len(self.students))
+        return len(self.students)
+    
+    #function to check if a course is compatible with a list of other courses
     def is_compatible(self, others):
         if not others:
             return True
         for x in others:
+            #not compatible
             if x.get_name() in self.red_flags: 
                 return False
         return True
     def get_compatibility_rating(self, others, courses):
+        '''
+        Function to get the level of compatibility a course has with a group of other courses
+        returns the number of overlapping students between the course and the group
+        and the names of the courses with whom it has overlapping students
+        '''
         overlap = list(set([x.get_name() for x in others]) & set(self.red_flags)) 
         num_clashing_students = 0
         for x in overlap:
             num_clashing_students += len(set(courses[course_index_hash_map[x]].get_students()) & set(self.get_students()))
         return [num_clashing_students , overlap]
         
-    def get_size(self):
-        self.set_size(len(self.students))
-        return len(self.students)
+   
 class Student:
     def __init__(self, ID, course):
         #this variable represents the student's id
@@ -231,41 +184,25 @@ def tree_user(classrooms, value):
                 min_val = node.get_value()
                 min_node = node
     return(min_node.get_steps())
-        
-def tree_user(classrooms, value): 
-    space =   sum([x * len(classrooms[x]) for x in classrooms])
-    if(space < value):
-        print("VALUE TOO LARGE",space, value)
-        return False 
-    z = tree_builder(classrooms, value)
-    x = []
-    nonzero = True
-
-    while nonzero:
-        x = z.build()
-        nonzero = not x[1] 
-    min_val = -98765434567
-    min_node = None
-    for node in x[0]:
-        if node.get_value() > min_val and node.get_value() <= 0:
-            if min_node != None and len(node.get_steps()) >= len(min_node.get_steps()):
-                pass                 
-            else:       
-                min_val = node.get_value()
-                min_node = node
-    return(min_node.get_steps())
 
 class Slot:
+    '''
+    These objects represent unique time slots for example 8am, 1pm, etc
+    '''
     def __init__(self, classrooms):
-        #this variable represents the student's id
-        #these represent is the student's program and year group
-        self.courses = []       
+        #this represents the courses to be examined in that slot
+        self.courses = []      
+        #the classrooms available for use 
         self.classrooms = classrooms
+        #the total space avaible 
         self.available_space = sum([x * len(self.classrooms[x]) for x in self.classrooms])
+    #accessor methods
     def get_courses(self):
         return self.courses
     def get_available_space(self):
         return self.available_space
+    #method to assign a new course to a slot.
+    #assign is only called if there is enough available space
     def assign(self, course):
         size = course.get_size()
         course_classrooms = tree_user(self.classrooms, size)
@@ -281,27 +218,7 @@ class Slot:
                 if(len(self.classrooms[x]) == 1 ):
                     del self.classrooms[x]
                 else:
-                    self.classrooms[x].pop(0)            
-    def get_courses(self):
-        return self.courses
-    def get_available_space(self):
-        return self.available_space
-    def assign(self, course):
-        size = course.get_size()
-        course_classrooms = tree_user(self.classrooms, size)
-        if (course_classrooms):
-            self.courses.append(course)
-            for x in course_classrooms:
-                room = self.classrooms[x][0]
-                #give course classroom update_classrooms()
-                course.update_classrooms(room)
-                #reduce available space
-                self.available_space -= x
-                # reduce self classrooms
-                if(len(self.classrooms[x]) == 1 ):
-                    del self.classrooms[x]
-                else:
-                    self.classrooms[x].pop(0)            
+                    self.classrooms[x].pop(0)                 
 
 def scheduler(exam_period, courses):
     ''' 
@@ -547,6 +464,7 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
     final_out = go_over(list_outs, hello[1])
     best_slots = get_best_slot(final_out[1], final_out[0], courses)
     actual_best = order_best_slot(best_slots, num_days)
+    print(actual_best)
     final_assignment = classroom_assigner(classrooms, final_out[0], actual_best)
     final_fr = schedule_unscheduled(final_assignment, best_slots, courses)  
     dates = get_dates(date(list_start_date[0], list_start_date[1], list_start_date[2]), num_days)
