@@ -552,5 +552,10 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
     final_fr = schedule_unscheduled(final_assignment, actual_best, courses)  
     dates = get_dates(date(list_start_date[0], list_start_date[1], list_start_date[2]), num_days)
     final = order_excel(final_fr, dates)
+    return json.dumps({
+        "success": True,
+        "message": "All done!",
+        "export_path": "final/final.xlsx"
+        })
 course_index_hash_map = {}
 main("original.xlsx", "classrooms.xlsx", 8, [2025, 4, 15])

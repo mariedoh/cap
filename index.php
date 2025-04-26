@@ -55,6 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         echo json_encode($response);
         exit;
     }
+    else{
+        echo json_encode(value: $response['export_path']);
+        exit;
+    }
 
 }
 else{

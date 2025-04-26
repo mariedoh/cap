@@ -61,6 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!data.success) {
       alert(data.message)
     }
+    else(){
+      window.location.replace("downloads.html");
+    }
     })
       })
     })
