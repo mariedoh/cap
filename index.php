@@ -74,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 
-    $command = escapeshellcmd("python algo.py " .
+    // $command = escapeshellcmd("/var/www/html/cap/venv/algo.py " .
+    $command = escapeshellcmd("/var/www/html/cap/venv/bin/python /var/www/html/cap/algo.py " . 
         escapeshellarg($studentFilePath) . " " .
         escapeshellarg($classroomFilePath) . " " .
         escapeshellarg($numDays) . " " .
