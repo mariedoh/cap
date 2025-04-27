@@ -531,11 +531,21 @@ def order_groups(course_objects, num_days):
         my_list[x.get_color()].append(x)
     return my_list
 def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
-    variables = prep_student_and_courses(enrol_excel_name)
+    num_days = int(num_days)
+    try:
+        variables = prep_student_and_courses(enrol_excel_name)
+    except ():
+        print(json.dumps({
+        "success": False,
+        "message": "Invalid Student Enrollment Data! Check Hint",
+        "export_path": ""
+        }))
+
     courses = variables[0]
     students = variables[1]
     course_index_hash_map = variables[2]
     threshold_unscheduled = (int(len(courses)/num_days) * 3)/2 + 1
+
     try:
         classrooms = prep_classroom_data(classroom_excel_name)
     except:
@@ -544,6 +554,7 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
         "message": "Invalid Classroom Data! Check Hint",
         "export_path": ""
         }))
+
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
@@ -558,4 +569,19 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
         "message": "All done!",
         "export_path": "final/final.xlsx"
         }))
+    
 course_index_hash_map = {}
+if __name__ == "__main__":
+    # # Make sure arguments are passed when running the script
+    # if len(sys.argv) < 5:
+    #     print("Usage: python algo.py <student_file> <classroom_file> <num_days> <formatted_date>")
+    #     sys.exit(1)
+    
+    student_file = sys.argv[1]
+    classroom_file = sys.argv[2]
+    num_days = sys.argv[3]
+    formatted_date = sys.argv[4]
+    
+    # Call main function
+    main(student_file, classroom_file, num_days, formatted_date)
+# main("files/original.xlsx", "files/classrooms.xlsx", 8, "2025-04-05")

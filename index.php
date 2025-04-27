@@ -62,19 +62,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $numDays = (int) $_POST["exam_period"];
-    // $py_path = "C:\Users\gyaba\AppData\Local\Programs\Python\Python312\python.exe";
+    
+    // Create a DateTime object from the provided date
+    $date = new DateTime();
+    $date->setDate(2025, 5, 2); // Set the year, month, and day
 
-    $command = escapeshellcmd("python3 algo.py " .
+    // Format the date to 'Y-m-d' (Year-Month-Day)
+    $formatted_date = $date->format('Y-m-d');
+
+    $check = 
+
+
+
+    $command = escapeshellcmd("python algo.py " .
         escapeshellarg($studentFilePath) . " " .
         escapeshellarg($classroomFilePath) . " " .
         escapeshellarg($numDays) . " " .
-        escapeshellarg($_POST["exam_date"])
+        escapeshellarg($formatted_date)
     ) . " 2>&1";  // <-- capture stderr too
-
+    // Clean up any carets (^) or unwanted characters from the output
+    $command = str_replace('^', '', $command);
     $output = shell_exec($command);
-
+    
     if ($output === null || $output === '') {
-        $response['message'] = "Python script did not return output.";
+        $response['message'] = $output;
         echo json_encode($response);
         exit;
     }
