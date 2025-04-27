@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("exam_period", 8);
     }
 
-    fetch("../middle.php", {
+    fetch("../index.php", {
       method: "POST",
       body: formData,
     })
