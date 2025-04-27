@@ -559,4 +559,3 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
         "export_path": "final/final.xlsx"
         }))
 course_index_hash_map = {}
-main("files/original.xlsx", "files/classrooms.xlsx", 8, "2025-04-26")
