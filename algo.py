@@ -476,7 +476,7 @@ def order_excel(final, dates):
     og_df['Class/Major of Registered Students'] = og_df['Class/Major of Registered Students'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
     og_df['Location'] = og_df['Location'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
  
-    excel_path = "final/final.xlsx"
+    excel_path = "/var/www/html/cap/final/final.xlsx"
     aight = og_df.to_excel(excel_path, index= False)
     wb = load_workbook(excel_path)
     ws = wb.active
