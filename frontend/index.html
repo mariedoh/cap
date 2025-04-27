@@ -9,7 +9,7 @@
 <body>
   <div id = "container" class="container">
     <div class="card">
-      <h1>Barbie's Timetable Generator</h1>
+      <h1>Timetable Generator</h1>
 
       <form id="uploadForm" enctype="multipart/form-data">
         <div class="form-group">
@@ -24,12 +24,10 @@
 
           <div class="form-group">
             <table>
-              <tr>
+              <tr id = "problem">
                 <td>
-                  <label for="enableNumberInput">Choose your own exam period:</label>
-                </td>
-                <td>
-                  <input type="checkbox" id="enableNumberInput" />
+                  <label for="enableNumberInput">Choose your own exam period? Default is 8 days</label>
+                  <input type="checkbox" id="enableNumberInput" onclick="toggleChecks()"/>
                 </td>
             </tr>
               <tr id = "numberInputContainer">
@@ -38,6 +36,16 @@
                 </td>
                 <td>
                   <input type="number" id="numberInput" name="numberInput" />
+                </td>
+              </tr>
+              <tr id = "startDate">
+                <td>
+                  <label for="startDate">When is the exam start date?</label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <input type="date" id="datee" name="datee"/>
                 </td>
               </tr>
             </table>
@@ -69,9 +77,6 @@
       </ul>
     </div>
   </div>
-
-  
-  
 
   <script src="script.js"></script>
 </body>

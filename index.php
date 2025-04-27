@@ -1,66 +1,99 @@
 <?php
-// Set error reporting for debugging
+// Set error reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-$response = array(
+
+$response = [
     'success' => false,
     'message' => '',
     'export_path' => ''
-);
+];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST'){
-    // Check if files were uploaded
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_FILES['student_data']) || !isset($_FILES['classroom_data'])) {
         $response['message'] = "Files Not Uploaded";
         echo json_encode($response);
         exit;
     }
-    // Function to check if file is an Excel file
+
     function isExcelFile($file) {
-        $allowedExtensions = array('xlsx', 'xls');
+        $allowedExtensions = ['xlsx', 'xls'];
         $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         return in_array($fileExtension, $allowedExtensions);
     }
 
-    // Validate file types
     if (!isExcelFile($_FILES['student_data']) || !isExcelFile($_FILES['classroom_data'])) {
         $response['message'] = "Only Excel Files Please";
         echo json_encode($response);
         exit;
     }
 
-    // Create files directory if it doesn't exist
     $uploadDir = 'files/';
     if (!file_exists($uploadDir)) {
         mkdir($uploadDir, 0777, true);
     }
 
-    // Process student data file
     $studentFile = $_FILES['student_data'];
     $studentFileName = basename($studentFile['name']);
     $studentFilePath = $uploadDir . $studentFileName;
 
-    // Process classroom data file
     $classroomFile = $_FILES['classroom_data'];
     $classroomFileName = basename($classroomFile['name']);
     $classroomFilePath = $uploadDir . $classroomFileName;
-    // Move uploaded files to the files directory
+
     $uploadSuccess = move_uploaded_file($studentFile['tmp_name'], $studentFilePath) &&
                      move_uploaded_file($classroomFile['tmp_name'], $classroomFilePath);
-    
-    $command = escapeshellcmd("python algo.py " . escapeshellarg($studentFilePath) . " " . escapeshellarg($classroomFilePath) . " " . escapeshellarg(8));
-    $output = shell_exec($command);
-    $response = json_decode($output, true);
-    if ($response["success"] === false){
+
+    if (!$uploadSuccess) {
+        $response['message'] = "Failed to upload files.";
         echo json_encode($response);
         exit;
     }
-    else{
-        echo json_encode(value: $response['export_path']);
+
+    if (!isset($_POST["exam_date"])) {
+        $response['message'] = "Select a start date for the exam please";
+        echo json_encode($response);
+        exit;
+    }
+    if (!isset($_POST["exam_period"])) {
+        $response['message'] = "Exam period not provided.";
+        echo json_encode($response);
         exit;
     }
 
-}
-else{
+    $numDays = (int) $_POST["exam_period"];
+    // $py_path = "C:\Users\gyaba\AppData\Local\Programs\Python\Python312\python.exe";
+
+    $command = escapeshellcmd("python algo.py " .
+        escapeshellarg($studentFilePath) . " " .
+        escapeshellarg($classroomFilePath) . " " .
+        escapeshellarg($numDays) . " " .
+        escapeshellarg($_POST["exam_date"])
+    ) . " 2>&1";  // <-- capture stderr too
+
+    $output = shell_exec($command);
+
+    if ($output === null || $output === '') {
+        $response['message'] = "Python script did not return output.";
+        echo json_encode($response);
+        exit;
+    }
+
+    $responseFromPython = json_decode($output, true);
+    if ($responseFromPython === null) {
+        $response['message'] = "Invalid JSON returned by Python script. Output: $output";
+        echo json_encode($response);
+        exit;
+    }
+
+    if ($responseFromPython["success"] === false) {
+        echo json_encode($responseFromPython);
+        exit;
+    } else {
+        echo json_encode($responseFromPython);
+        exit;
+    }
+} else {
     exit;
 }
+?>

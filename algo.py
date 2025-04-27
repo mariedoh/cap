@@ -4,7 +4,8 @@ import sys
 import json
 from openpyxl import load_workbook
 from datetime import date
-import datetime
+from datetime import datetime
+import datetime as og
 import holidays
 hope = holidays.Ghana()
 
@@ -502,9 +503,9 @@ def get_dates(start_date, num_days):
         if(date_c.weekday() <= 4 and not(date_c in hope)):
             y.append(date_c.strftime("%d %B, %Y"))
             x+=1
-            date_c = date_c + datetime.timedelta(days=1)
+            date_c = date_c + og.timedelta(days=1)
         else:
-            date_c = date_c + datetime.timedelta(days=1)
+            date_c = date_c + og.timedelta(days=1)
     return y
 
 def schedule_unscheduled(final_assignment, actual_best, courses):
@@ -538,11 +539,11 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
     try:
         classrooms = prep_classroom_data(classroom_excel_name)
     except:
-        return json.dumps({
+        print(json.dumps({
         "success": False,
         "message": "Invalid Classroom Data! Check Hint",
         "export_path": ""
-        })
+        }))
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
@@ -550,12 +551,12 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
     actual_best = order_best_slot(best_slots, num_days)
     final_assignment = classroom_assigner(classrooms, final_out[0], actual_best)
     final_fr = schedule_unscheduled(final_assignment, actual_best, courses)  
-    dates = get_dates(date(list_start_date[0], list_start_date[1], list_start_date[2]), num_days)
+    dates = get_dates(datetime.strptime(list_start_date, "%Y-%m-%d").date(), num_days)
     final = order_excel(final_fr, dates)
-    return json.dumps({
+    print(json.dumps({
         "success": True,
         "message": "All done!",
         "export_path": "final/final.xlsx"
-        })
+        }))
 course_index_hash_map = {}
-main("original.xlsx", "classrooms.xlsx", 8, [2025, 4, 15])
+main("files/original.xlsx", "files/classrooms.xlsx", 8, "2025-04-26")

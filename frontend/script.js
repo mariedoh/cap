@@ -24,33 +24,56 @@ window.addEventListener("click", function(event) {
   }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  const enableNumberInputCheckbox = document.getElementById("enableNumberInput");
-  const numberInputContainer = document.getElementById("numberInputContainer");
+function toggleChecks(){
+  const checkbox = document.getElementById("enableNumberInput");
+  const element = document.getElementById("numberInputContainer");
 
-  // Toggle visibility of the number input field when checkbox is clicked
-  enableNumberInputCheckbox.addEventListener("change", () => {
-    if (enableNumberInputCheckbox.checked) {
-      numberInputContainer.style.display = "table-row"; // Show the row
-    } else {
-      numberInputContainer.style.display = "none"; // Hide the row
-    }
-  });
-  // Initially hide the number input field
-  numberInputContainer.style.display = "none";
-});
+  if (checkbox.checked) {
+    element.style.display = "block";
+  } else {
+    element.style.display = "none";
+  }
+}
 
 
 document.addEventListener("DOMContentLoaded", () => {
   const uploadForm = document.getElementById("uploadForm")
-  const resultsDiv = document.getElementById("results")
-  const fileList = document.getElementById("file-list")
 
   uploadForm.addEventListener("submit", (e) => {
     e.preventDefault()
-    const formData = new FormData()
-    formData.append("student_data", document.getElementById("student_data").files[0])
-    formData.append("classroom_data", document.getElementById("classroom_data").files[0])
+    const formData = new FormData();
+    formData.append("student_data", document.getElementById("student_data").files[0]);
+    formData.append("classroom_data", document.getElementById("classroom_data").files[0]);
+
+    const dateInput = document.getElementById("datee").value;
+    if (dateInput) {
+        const [year, month, day] = dateInput.split("-");
+        const yearInt = parseInt(year);
+        const monthInt = parseInt(month);
+        const dayInt = parseInt(day);
+        
+        // Check if all values are valid numbers
+        if (!isNaN(yearInt) && !isNaN(monthInt) && !isNaN(dayInt)) {
+            formData.append("exam_date", [yearInt, monthInt, dayInt]);
+        } else {
+            alert("Invalid date input");
+        }
+    }
+
+    // Get the number input if it's not null or empty
+    const numberInput = document.getElementById("numberInput").value;
+    if (numberInput) {
+        const numberInt = parseInt(numberInput);
+        if (!isNaN(numberInt)) {
+            formData.append("exam_period", numberInt);
+        } else {
+            alert("Invalid exam period input");
+        }
+    }
+    else{
+      formData.append("exam_period", 8);
+    }
+
     fetch("../index.php", {
       method: "POST",
       body: formData,
@@ -61,8 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!data.success) {
       alert(data.message)
     }
-    else(){
-      window.location.replace("downloads.html");
+    else{
+      window.location.assign("download.html");
     }
     })
       })
