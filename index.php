@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $numDays = (int) $_POST["exam_period"];
     // $py_path = "C:\Users\gyaba\AppData\Local\Programs\Python\Python312\python.exe";
 
-    $command = escapeshellcmd("/var/www/html/cap/venv/bin/python algo.py " .
+    $command = escapeshellcmd("python algo.py " .
         escapeshellarg($studentFilePath) . " " .
         escapeshellarg($classroomFilePath) . " " .
         escapeshellarg($numDays) . " " .
