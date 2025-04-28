@@ -554,7 +554,6 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
         }))
     
 course_index_hash_map = {}
-main("files/original.xlsx", "files/classrooms.xlsx", 8, "2025-04-05")
 if __name__ == "__main__":
     # # Make sure arguments are passed when running the script
     # if len(sys.argv) < 5:
