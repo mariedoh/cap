@@ -1,25 +1,32 @@
 body {
-  background: linear-gradient(to bottom right, #ffe6f0, #fff0f5);
-  font-family: 'Comic Sans MS', cursive, sans-serif;
+  background: 
+    linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+    url('../ash.jpeg');
+  background-size: cover;
+  background-position: center;
+  font-family: 'Poppins', sans-serif;
   margin: 0;
   padding: 40px;
 }
 
 .container {
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
 .card {
   background-color: #ffffff;
   padding: 30px;
-  border-radius: 16px;
-  max-width: 500px;
-  width: 100%;
-  box-shadow: 0 10px 25px rgba(255, 105, 180, 0.3);
-  border: 2px dashed #ff69b4;
-  position: relative;  /* Add this to allow absolute positioning inside */
+  /* border-radius: 16px; */
+  max-width: 350px;
+  width: 70%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* soft gray shadow */
+  border: 2px solid #9a0000;
+  position: relative;
   overflow: hidden;
+  justify-content: center;
+  align-items: center;
 }
 
 .card::before {
@@ -29,10 +36,10 @@ body {
   left: -50%;
   width: 200%;
   height: 200%;
-  background-image: radial-gradient(circle, #ffb6c1 0%, transparent 70%);
+  background-image: radial-gradient(circle, #e0e0e0 0%, transparent 70%);
   animation: sparkle 6s linear infinite;
   z-index: 0;
-  opacity: 0.2;
+  opacity: 0.1;
 }
 
 @keyframes sparkle {
@@ -44,12 +51,20 @@ body {
   }
 }
 
+
+form {
+  width: 100%; 
+  justify-self: center;
+  align-items: center; 
+  background-color: white;
+}
+
 h1 {
   text-align: center;
   font-size: 26px;
   font-weight: bold;
   margin-bottom: 25px;
-  color: #d63384;
+  color: #9a0000;
   z-index: 1;
   position: relative;
 }
@@ -64,25 +79,25 @@ label {
   display: block;
   margin-bottom: 6px;
   font-size: 14px;
-  color: #e91e63;
-  font-weight: bold;
+  color: black;
+  /* font-weight: bold; */
 }
 
 input[type="file"] {
-  width: 100%;
+  width: 85%;
   padding: 10px;
-  border: 2px solid #f48fb1;
+  border: 2px solid #9a0000;
   border-radius: 8px;
   font-size: 14px;
-  background-color: #fff0f5;
+  background-color: #f9f9f9;
   color: #333;
   transition: all 0.3s ease;
 }
 
 input[type="file"]:focus {
   outline: none;
-  border-color: #ff1493;
-  background-color: #fff8fb;
+  border-color: #600000;
+  background-color: #ffffff;
 }
 
 .button-container {
@@ -93,44 +108,44 @@ input[type="file"]:focus {
 }
 
 button {
-  background-color: #ff69b4;
+  background-color: #9a0000;
   color: white;
   padding: 12px 24px;
   font-size: 15px;
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 105, 180, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   text-transform: uppercase;
   font-weight: bold;
 }
 
 button:hover {
-  background-color: #ff1493;
+  background-color: #600000;
   transform: scale(1.05);
 }
 
 .info-icon {
   position: absolute;
-  top: 10px; 
-  right: 10px; 
+  top: 10px;
+  right: 10px;
   cursor: pointer;
-  z-index: 10; 
-  background-color: #ff69b4;
+  z-index: 10;
+  background-color: #9a0000;
   border-radius: 50%;
   padding: 8px;
-  box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
 }
 
 .info-icon img {
-  width: 30px;  
+  width: 30px;
   height: 30px;
 }
 
 .info-icon:hover {
-  background-color: #ff1493;
+  background-color: #600000;
   transform: scale(1.1);
 }
 
@@ -153,12 +168,12 @@ button:hover {
   border-radius: 8px;
   width: 400px;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(255, 105, 180, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   position: relative;
 }
 
 .modal-content h2 {
-  color: #ff69b4;
+  color: #9a0000;
   font-size: 22px;
   font-weight: bold;
 }
@@ -166,7 +181,7 @@ button:hover {
 .modal-content ul {
   text-align: left;
   font-size: 14px;
-  color: #e91e63;
+  color: #333;
   list-style-type: disc;
   padding-left: 20px;
 }
@@ -176,14 +191,40 @@ button:hover {
   top: 10px;
   right: 10px;
   font-size: 28px;
-  color: #ff69b4;
+  color: #9a0000;
   cursor: pointer;
 }
 
-.close:hover {
-  color: #ff1493;
+close:hover {
+  color: #600000;
 }
 
-#numberInputContainer{
+#numberInputContainer {
   display: none;
+}
+
+#startDate {
+  justify-content: space-around;
+}
+
+#datee {
+  background-color: #f9f9f9;
+  border: 2px solid #9a0000;
+  border-radius: 12px;
+  padding: 10px;
+  font-family: 'Poppins', sans-serif;
+  color: #600000;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+#datee:hover {
+  background-color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+}
+
+#datee:focus {
+  outline: none;
+  border-color: #600000;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
 }
