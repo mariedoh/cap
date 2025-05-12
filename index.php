@@ -85,10 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $responseFromPython = json_decode($output, true);
-<<<<<<< HEAD
-
-=======
->>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
     if ($responseFromPython === null) {
         $response['message'] = "Invalid JSON returned by Python script. Output: $output";
         echo json_encode($response);
@@ -99,11 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode($responseFromPython);
         exit;
     } else {
-<<<<<<< HEAD
         echo json_encode($responseFromPython['export_path']);
-=======
-        echo json_encode($responseFromPython);
->>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
         exit;
     }
 } else {
