@@ -27,6 +27,13 @@ body {
   overflow: hidden;
   justify-content: center;
   align-items: center;
+<<<<<<< HEAD
+=======
+}
+#time_ready{
+  margin-top: 12.5%;
+  background-color: white;
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
 }
 
 .card::before {
@@ -51,7 +58,10 @@ body {
   }
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
 form {
   width: 100%; 
   justify-self: center;
@@ -68,6 +78,7 @@ h1 {
   z-index: 1;
   position: relative;
 }
+
 
 .form-group {
   margin-bottom: 20px;
@@ -108,6 +119,10 @@ input[type="file"]:focus {
 }
 
 button {
+<<<<<<< HEAD
+=======
+  align-self: center;
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
   background-color: #9a0000;
   color: white;
   padding: 12px 24px;
@@ -227,4 +242,22 @@ close:hover {
   outline: none;
   border-color: #600000;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+<<<<<<< HEAD
+=======
+}
+
+#download_button{
+  background-color: #9a0000;
+  color: white;
+  padding: 50px 70px;
+  font-size: 15px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  font-weight: bold;
+  
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
 }

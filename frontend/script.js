@@ -27,6 +27,16 @@ window.addEventListener("click", function(event) {
 function toggleChecks(){
   const checkbox = document.getElementById("enableNumberInput");
   const element = document.getElementById("numberInputContainer");
+<<<<<<< HEAD
+=======
+
+  if (checkbox.checked) {
+    element.style.display = "block";
+  } else {
+    element.style.display = "none";
+  }
+}
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
 
   if (checkbox.checked) {
     element.style.display = "block";
@@ -84,7 +94,11 @@ document.addEventListener("DOMContentLoaded", () => {
       alert(data.message)
     }
     else{
+<<<<<<< HEAD
       window.location.replace("downloads.html");
+=======
+      window.location.assign("download.html");
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
     }
     })
       })

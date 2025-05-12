@@ -4,7 +4,8 @@ import sys
 import json
 from openpyxl import load_workbook
 from datetime import date
-import datetime
+from datetime import datetime
+import datetime as og
 import holidays
 hope = holidays.Ghana()
 
@@ -253,53 +254,6 @@ def scheduler(exam_period, courses):
         my_queue.sort(key=lambda x: len([y for y in x.get_red() if y not in visited]), reverse=True)
     return (scheduled, unscheduled)
 
-def re_scheduler(exam_period, courses, to_schedule):
-    ''' 
-    Schedules only the courses in `to_schedule` list over the given `exam_period` days,
-    while considering conflicts (reds) based on the full `courses` list.
-    
-    Args:
-        exam_period (int): Number of days available for exams.
-        courses (list): All course objects (needed for conflict resolution).
-        to_schedule (list): Subset of course objects to be scheduled.
-        
-    Returns:
-        tuple: (scheduled_courses, unscheduled_courses)
-    '''
-    unscheduled = []
-    scheduled = []
-    my_queue = []
-    visited = []
-    
-    # Start with the first course to be scheduled
-    start = to_schedule[0]
-    my_queue.append(start)
-    
-    while my_queue:
-        current = my_queue.pop(0)
-        
-        # Get conflicting courses (reds) using full courses list
-        reds = [courses[course_index_hash_map[x]] for x in current.get_red()]
-        colors = set([y.get_color() for y in reds if y in visited])
-        
-        for x in range(0, exam_period):
-            if x not in colors:
-                current.set_color(x)
-                scheduled.append(current)
-                break  # assign first available color and break
-        
-        visited.append(current)
-        
-        if current.get_color() not in range(0, exam_period):
-            unscheduled.append(current)            
-
-        # Add only the remaining to_schedule courses not yet visited
-        my_queue.extend([y for y in to_schedule if y not in reds and y not in visited and y not in my_queue])
-        my_queue.sort(key=lambda x: len([y for y in x.get_red() if y not in visited]), reverse=True)
-
-    return (scheduled, unscheduled)
-
-
 def find_largest_compatible_subset(courses, course_list):
     """
     Finds the largest set of non-conflicting courses.
@@ -456,42 +410,72 @@ def assignments(cour, classrooms, clashing):
             eight_am.assign(x)
     return [eight_am, one_pm]
     
-
 def individual_dfs(day, time, slot):
-    daytimes = [day+ " "+ time for x in range(len(slot.get_courses()))]
-    cours = [x.get_name() for x in slot.get_courses()]
+    day_list = [day for _ in range(len(slot.get_courses()))]
+    time_list = [time for _ in range(len(slot.get_courses()))]
+    courses = [x.get_name() for x in slot.get_courses()]
     rooms = [x.get_classrooms() for x in slot.get_courses()]
     breakdowns = [x.get_breakdown() for x in slot.get_courses()]
-    tests = pd.DataFrame( list(zip(daytimes, cours, rooms, breakdowns)), columns=["Day - Time", 'Courses', 'Location', 'Class/Major of Registered Students'])
+    
+    tests = pd.DataFrame(list(zip(day_list, time_list, courses, rooms, breakdowns)),
+                         columns=["Day", "Time", "Courses", "Location", "Class/Major of Registered Students"])
     return tests
+
 def order_excel(final, dates):
     og_df = pd.DataFrame()
+
     for x in range(len(final)):
         day = final[x]
-        eight = individual_dfs(f"{dates[x]}","Eight AM",day[0])
-        one = individual_dfs(f"{dates[x]}" , "One PM", day[1])
+        eight = individual_dfs(f"{dates[x]}", "Eight AM", day[0])
+        one = individual_dfs(f"{dates[x]}", "One PM", day[1])
 
-        og_df = pd.concat([og_df, eight,one], ignore_index=True)
-    og_df['Class/Major of Registered Students'] = og_df['Class/Major of Registered Students'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
-    og_df['Location'] = og_df['Location'].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
- 
-    excel_path = "final/final.xlsx"
-    aight = og_df.to_excel(excel_path, index= False)
+        og_df = pd.concat([og_df, eight, one], ignore_index=True)
+
+    # Expand any lists in 'Location' and 'Class/Major'
+    og_df['Class/Major of Registered Students'] = og_df['Class/Major of Registered Students'].apply(
+        lambda x: ", ".join(x) if isinstance(x, list) else x)
+    og_df['Location'] = og_df['Location'].apply(
+        lambda x: ", ".join(x) if isinstance(x, list) else x)
+
+    excel_path = "/var/www/html/cap/final/final.xlsx"
+    og_df.to_excel(excel_path, index=False)
+    
     wb = load_workbook(excel_path)
     ws = wb.active
 
-    current_value = None
-    start_row = 2  # Excel rows (1-indexed, with header at row 1)
-    for i in range(2, len(og_df) + 2):  # 2 to 5
-        cell_value = ws[f"A{i}"].value
-        if cell_value != current_value:
-            if current_value is not None and start_row != i - 1:
-                ws.merge_cells(start_row=start_row, start_column=1, end_row=i - 1, end_column=1)
-            current_value = cell_value
-            start_row = i
-    # Final merge if last rows are the same
-    if start_row != len(og_df) + 1:
-        ws.merge_cells(start_row=start_row, start_column=1, end_row=len(og_df) + 1, end_column=1)
+    # Merge Days
+    current_day = None
+    start_day_row = 2
+
+    # Merge Times
+    current_time = None
+    start_time_row = 2
+
+    for i in range(2, len(og_df) + 2):
+        day_value = ws[f"A{i}"].value
+        time_value = ws[f"B{i}"].value
+
+        # Handle Day merging
+        if day_value != current_day:
+            if current_day is not None and start_day_row != i - 1:
+                ws.merge_cells(start_row=start_day_row, start_column=1, end_row=i - 1, end_column=1)
+            current_day = day_value
+            start_day_row = i
+
+        # Handle Time merging
+        if time_value != current_time or day_value != current_day:
+            if current_time is not None and start_time_row != i - 1:
+                ws.merge_cells(start_row=start_time_row, start_column=2, end_row=i - 1, end_column=2)
+            current_time = time_value
+            start_time_row = i
+
+    # Final merge for last groups
+    if start_day_row != len(og_df) + 1:
+        ws.merge_cells(start_row=start_day_row, start_column=1, end_row=len(og_df) + 1, end_column=1)
+
+    if start_time_row != len(og_df) + 1:
+        ws.merge_cells(start_row=start_time_row, start_column=2, end_row=len(og_df) + 1, end_column=2)
+
     wb.save(excel_path)
 def get_dates(start_date, num_days):
     date_c = start_date
@@ -502,9 +486,9 @@ def get_dates(start_date, num_days):
         if(date_c.weekday() <= 4 and not(date_c in hope)):
             y.append(date_c.strftime("%d %B, %Y"))
             x+=1
-            date_c = date_c + datetime.timedelta(days=1)
+            date_c = date_c + og.timedelta(days=1)
         else:
-            date_c = date_c + datetime.timedelta(days=1)
+            date_c = date_c + og.timedelta(days=1)
     return y
 
 def schedule_unscheduled(final_assignment, actual_best, courses):
@@ -530,19 +514,30 @@ def order_groups(course_objects, num_days):
         my_list[x.get_color()].append(x)
     return my_list
 def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
-    variables = prep_student_and_courses(enrol_excel_name)
+    num_days = int(num_days)
+    try:
+        variables = prep_student_and_courses(enrol_excel_name)
+    except ():
+        print(json.dumps({
+        "success": False,
+        "message": "Invalid Student Enrollment Data! Check Hint",
+        "export_path": ""
+        }))
+
     courses = variables[0]
     students = variables[1]
     course_index_hash_map = variables[2]
     threshold_unscheduled = (int(len(courses)/num_days) * 3)/2 + 1
+
     try:
         classrooms = prep_classroom_data(classroom_excel_name)
     except:
-        return json.dumps({
+        print(json.dumps({
         "success": False,
         "message": "Invalid Classroom Data! Check Hint",
         "export_path": ""
-        })
+        }))
+
     hello = scheduler(num_days, courses)
     list_outs = prep_output(courses, num_days)
     final_out = go_over(list_outs, hello[1])
@@ -550,12 +545,25 @@ def main(enrol_excel_name, classroom_excel_name, num_days, list_start_date):
     actual_best = order_best_slot(best_slots, num_days)
     final_assignment = classroom_assigner(classrooms, final_out[0], actual_best)
     final_fr = schedule_unscheduled(final_assignment, actual_best, courses)  
-    dates = get_dates(date(list_start_date[0], list_start_date[1], list_start_date[2]), num_days)
+    dates = get_dates(datetime.strptime(list_start_date, "%Y-%m-%d").date(), num_days)
     final = order_excel(final_fr, dates)
-    return json.dumps({
+    print(json.dumps({
         "success": True,
         "message": "All done!",
         "export_path": "final/final.xlsx"
-        })
+        }))
+    
 course_index_hash_map = {}
-main("original.xlsx", "classrooms.xlsx", 8, [2025, 4, 15])
+if __name__ == "__main__":
+    # # Make sure arguments are passed when running the script
+    # if len(sys.argv) < 5:
+    #     print("Usage: python algo.py <student_file> <classroom_file> <num_days> <formatted_date>")
+    #     sys.exit(1)
+    
+    student_file = sys.argv[1]
+    classroom_file = sys.argv[2]
+    num_days = sys.argv[3]
+    formatted_date = sys.argv[4]
+    
+    # Call main function
+    main(student_file, classroom_file, num_days, formatted_date)

@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+<<<<<<< HEAD
     $start_date = [
         (int)$_POST["exam_date"][2],
         (int)$_POST["exam_date"][0],
@@ -80,12 +81,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($output === null || $output === '') {
         $response['message'] = "Python script did not return output.";
+=======
+    $numDays = (int) $_POST["exam_period"];
+    
+    // Create a DateTime object from the provided date
+    $date = new DateTime();
+    $date->setDate(2025, 5, 2); // Set the year, month, and day
+
+    // Format the date to 'Y-m-d' (Year-Month-Day)
+    $formatted_date = $date->format('Y-m-d');
+
+    $check = 
+
+
+
+    // $command = escapeshellcmd("/var/www/html/cap/venv/algo.py " .
+    $command = escapeshellcmd("/var/www/html/cap/venv/bin/python /var/www/html/cap/algo.py " . 
+        escapeshellarg($studentFilePath) . " " .
+        escapeshellarg($classroomFilePath) . " " .
+        escapeshellarg($numDays) . " " .
+        escapeshellarg($formatted_date)
+    ) . " 2>&1";  // <-- capture stderr too
+    // Clean up any carets (^) or unwanted characters from the output
+    $command = str_replace('^', '', $command);
+    $output = shell_exec($command);
+    
+    if ($output === null || $output === '') {
+        $response['message'] = $output;
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
         echo json_encode($response);
         exit;
     }
 
     $responseFromPython = json_decode($output, true);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
     if ($responseFromPython === null) {
         $response['message'] = "Invalid JSON returned by Python script. Output: $output";
         echo json_encode($response);
@@ -96,7 +128,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode($responseFromPython);
         exit;
     } else {
+<<<<<<< HEAD
         echo json_encode($responseFromPython['export_path']);
+=======
+        echo json_encode($responseFromPython);
+>>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
         exit;
     }
 } else {

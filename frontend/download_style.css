@@ -1,0 +1,66 @@
+/* simple_download.css */
+
+/* Ashesi colors */
+:root {
+    --ashesi-red: #9e1b32;
+    --ashesi-dark: #2c2c2c;
+    --ashesi-light: #f5f5f5;
+    --button-hover: #7f1528;
+  }
+  
+  /* Reset basic styles */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    background: 
+    linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+    url('../ash.jpeg');
+    background-size: cover;
+    background-position: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--ashesi-light);
+    color: var(--ashesi-dark);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .container {
+    background: white;
+    padding: 2rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  h1 {
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    color: var(--ashesi-red);
+  }
+  
+  #downloadBtn {
+    background-color: var(--ashesi-red);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  #downloadBtn:hover {
+    background-color: var(--button-hover);
+    transform: translateY(-2px);
+  }
+  
+  #downloadBtn:active {
+    transform: translateY(0);
+  }
+  
