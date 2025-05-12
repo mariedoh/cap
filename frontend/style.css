@@ -119,10 +119,6 @@ input[type="file"]:focus {
 }
 
 button {
-<<<<<<< HEAD
-=======
-  align-self: center;
->>>>>>> 2617ad3030c6632b9aaff66b1dfc6e29ee15e85f
   background-color: #9a0000;
   color: white;
   padding: 12px 24px;
