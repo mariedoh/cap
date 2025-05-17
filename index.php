@@ -89,8 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($responseFromPython["success"] === false) {
         echo json_encode($responseFromPython);
         exit;
-    } else {
-        echo json_encode($responseFromPython['export_path']);
+    } 
+    else {
+        echo json_encode($responseFromPython);
         exit;
     }
 } else {
