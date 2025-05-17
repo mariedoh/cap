@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert(data.message)
     }
     else{
-      window.location.replace("downloads.html");
+      window.location.assign("download.html");
     }
     })
       })
