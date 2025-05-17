@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         escapeshellarg($studentFilePath) . " " .
         escapeshellarg($classroomFilePath) . " " .
         escapeshellarg($numDays) . " " .
-        escapeshellarg(implode("-", $start_date))
+        escapeshellarg( $start_date)
     ) . " 2>&1";  // <-- capture stderr too
 
     $output = shell_exec($command);
