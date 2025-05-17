@@ -62,9 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $start_date = str_replace(",", "-", $_POST["exam_date"]);
-    $response["message"] = $start_date;
-    echo json_encode($response);
-    exit;
 
     $numDays = (int) $_POST["exam_period"];
     $command = escapeshellcmd("/var/www/html/cap/venv/bin/python /var/www/html/cap/algo.py " . 
