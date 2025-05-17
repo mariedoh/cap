@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     if(isset($_POST["exam_date"])){
-        echo json_encode($_POST["exam_date"]);
+        $response['message'] = $_POST["exam_date"];
+        echo json_encode($response);
     }
     if (!isset($_POST["exam_period"])) {
         $response['message'] = "Exam period not provided.";
