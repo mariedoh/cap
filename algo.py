@@ -229,7 +229,7 @@ class Slot:
 def scheduler(exam_period, courses):
     ''' 
     This function takes a variable representing the number of days available for examinations and 
-    the list of course objects to be scheduled and 
+    the list of course objects to be scheduled
     Returns:
         set of scheduled and unscheduled courses
     '''
