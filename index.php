@@ -61,12 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $start_date = [
-        (int)$_POST["exam_date"][0],
-        (int)$_POST["exam_date"][1],
-        (int)$_POST["exam_date"][2]
-    ];
-
+    $start_date = str_replace(",", "-", $_POST["exam_date"]);
     $response["message"] = $start_date;
     echo json_encode($response);
     exit;
