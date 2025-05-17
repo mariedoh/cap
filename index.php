@@ -55,10 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode($response);
         exit;
     }
-    if(isset($_POST["exam_date"])){
-        $response['message'] = $_POST["exam_date"];
-        echo json_encode($response);
-    }
     if (!isset($_POST["exam_period"])) {
         $response['message'] = "Exam period not provided.";
         echo json_encode($response);
@@ -66,9 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $start_date = [
-        (int)$_POST["exam_date"][2],
         (int)$_POST["exam_date"][0],
-        (int)$_POST["exam_date"][1]
+        (int)$_POST["exam_date"][1],
+        (int)$_POST["exam_date"][2]
     ];
     $numDays = (int) $_POST["exam_period"];
     $command = escapeshellcmd("/var/www/html/cap/venv/bin/python /var/www/html/cap/algo.py " . 
